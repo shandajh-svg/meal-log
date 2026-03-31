@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meal Log Tracker</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#f5f4f0;color:#1a1a1a;padding:1.5rem;min-height:100vh;text-transform:uppercase}
@@ -39,6 +38,8 @@ body{font-family:system-ui,sans-serif;background:#f5f4f0;color:#1a1a1a;padding:1
   <input type="text" id="search" placeholder="Search meals or ingredients..." oninput="render()">
   <button class="btn-black" onclick="openAddMeal()">+ New Meal</button>
   <button class="btn-green" onclick="downloadBackup()">&#8595; Download Backup</button>
+  <button class="btn-green" onclick="document.getElementById('import-file').click()">&#8593; Import Backup</button>
+  <input type="file" id="import-file" accept=".json" style="display:none" onchange="importBackup(this)">
 </div>
 <div id="meal-list"></div>
 <div class="modal-bg" id="modal-bg">
@@ -75,6 +76,37 @@ function downloadBackup() {
   a.href = URL.createObjectURL(blob);
   a.download = 'meal_log_backup_' + new Date().toISOString().slice(0,10) + '.json';
   a.click();
+}
+
+function importBackup(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var imported = JSON.parse(e.target.result);
+      if (!imported.meals || !Array.isArray(imported.meals)) {
+        alert('Invalid backup file.');
+        return;
+      }
+      if (!confirm('This will replace all current data with the backup. Continue?')) return;
+      data = imported;
+      data.meals.forEach(function(m) {
+        if (!m.instructions) m.instructions = '';
+        if (!m.photo) m.photo = '';
+        if (!m.entries) m.entries = [];
+      });
+      openMeals = {};
+      data.meals.forEach(function(m) { openMeals[m.id] = true; });
+      save();
+      render();
+      alert('Backup imported successfully!');
+    } catch(err) {
+      alert('Could not read file. Make sure it is a valid meal log backup JSON file.');
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
 }
 
 function compressImage(file, cb) {
