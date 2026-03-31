@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meal Log Tracker</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f4f0;color:#1a1a1a;padding:1.5rem;min-height:100vh;text-transform:uppercase}
+.toolbar{display:flex;gap:8px;margin-bottom:1rem;align-items:center;flex-wrap:wrap}
+.toolbar input{flex:1;min-width:180px;font-size:14px;padding:8px 12px;border:1px solid #ccc;border-radius:8px;background:#fff;text-transform:uppercase}
+.btn-black{font-size:13px;font-weight:700;padding:8px 16px;border-radius:8px;background:#1a1a1a;color:#fff;cursor:pointer;border:none;text-transform:uppercase}
+.btn-green{font-size:13px;font-weight:700;padding:8px 16px;border-radius:8px;background:#3a6a1a;color:#fff;cursor:pointer;border:none;text-transform:uppercase}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:12px;border:1px solid #ddd;padding:22px;width:min(520px,95vw);max-height:90vh;overflow-y:auto}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:4px}
+.modal-sub{font-size:12px;color:#666;margin-bottom:14px}
+.field{margin-bottom:14px}
+.field label{font-size:12px;color:#555;display:block;margin-bottom:5px;font-weight:600}
+.field input,.field textarea{width:100%;font-size:14px;padding:8px;border:1px solid #ccc;border-radius:8px;font-family:inherit}
+.field textarea{resize:vertical;min-height:90px}
+.field textarea.tall{min-height:140px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.btn-save{font-size:13px;padding:7px 16px;border-radius:8px;background:#1a1a1a;color:#fff;cursor:pointer;font-weight:700;border:none;text-transform:uppercase}
+.btn-cancel{font-size:12px;padding:5px 12px;border-radius:8px;background:#f0f0f0;color:#555;cursor:pointer;border:1px solid #ccc;text-transform:uppercase}
+.upload-zone{border:2px dashed #ccc;border-radius:12px;padding:2rem;text-align:center;cursor:pointer}
+.upload-zone:hover{border-color:#888}
+.upload-zone input[type=file]{display:none}
+.empty{font-size:14px;color:#888;text-align:center;padding:2rem 0}
+.count-badge{font-size:12px;border-radius:9px;padding:2px 9px;background:rgba(255,255,255,0.55);border:1px solid rgba(0,0,0,0.15)}
+.meal-card{max-width:780px;margin:0 auto 10px auto}
+.meal-inner{padding:14px 16px}
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <input type="text" id="search" placeholder="Search meals or ingredients..." oninput="render()">
+  <button class="btn-black" onclick="openAddMeal()">+ New Meal</button>
+  <button class="btn-green" onclick="downloadBackup()">&#8595; Download Backup</button>
+</div>
+<div id="meal-list"></div>
+<div class="modal-bg" id="modal-bg">
+  <div class="modal" id="modal-inner"></div>
+</div>
+<script>
+var STORAGE_KEY = 'meal_log_v1';
+
+function loadData() {
+  try {
+    var s = localStorage.getItem(STORAGE_KEY);
+    if (s) return JSON.parse(s);
+  } catch(e) {}
+  return null;
+}
+
+function saveData(d) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+  } catch(e) {
+    try {
+      var slim = JSON.parse(JSON.stringify(d));
+      slim.meals.forEach(function(m) { m.photo = ''; });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(slim));
+      alert('Storage almost full - photos not saved. Use Download Backup to save everything.');
+    } catch(e2) {}
+  }
+}
+
+function downloadBackup() {
+  var json = JSON.stringify(data, null, 2);
+  var blob = new Blob([json], {type: 'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'meal_log_backup_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+}
+
+function compressImage(file, cb) {
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var img = new Image();
+    img.onload = function() {
+      var MAX = 900, w = img.width, h = img.height;
+      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      cb(canvas.toDataURL('image/jpeg', 0.7));
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+var PALETTES = [
+  {bg:'#dbeafe',border:'#93c5fd',text:'#1e3a5f'},
+  {bg:'#dcfce7',border:'#86efac',text:'#14532d'},
+  {bg:'#fef3c7',border:'#fcd34d',text:'#78350f'},
+  {bg:'#fce7f3',border:'#f9a8d4',text:'#831843'},
+  {bg:'#ede9fe',border:'#c4b5fd',text:'#3b0764'},
+  {bg:'#ffedd5',border:'#fdba74',text:'#7c2d12'},
+  {bg:'#cffafe',border:'#67e8f9',text:'#164e63'},
+  {bg:'#f0fdf4',border:'#6ee7b7',text:'#064e3b'}
+];
+
+function getPalette(idx) { return PALETTES[idx % PALETTES.length]; }
+
+// Seed from backup data
+var SEED = {"meals":[{"id":1,"name":"Chicken noodle soup","instructions":"","photo":"","entries":[{"id":1,"date":"2026-03-25","ingredients":"120g kefir, 1/16 tsp salt, 1 egg, 2 mandarin oranges, 1 1/4 tsp bouillon (extra over recipe), 48g noodles, 100g chicken, 1 serving broth, 200g water, 25g onion, 1 carrot, 1 celery"}]},{"id":2,"name":"Thin crust pizza","instructions":"","photo":"","entries":[{"id":1,"date":"2026-03-26","ingredients":"pizza sauce, 40g mozzarella, 1 egg, 1/16 tsp salt, 1/2 tsp no salt, 30g black olives, pizza crust, 120g kefir"}]},{"id":3,"name":"chuck wagon stew","instructions":"add 1 tsp boullion & 150 ml water","photo":"","entries":[{"id":2,"date":"2026-03-27","ingredients":"120g kefir, 1 egg, 2 mandarins, avocado, 1 tsp boullion, 200 ml water, 6 pinches salt, 1/2 tsp nosalt"}]},{"id":4,"name":"asian salmon, rice & avocado","instructions":"Creamy Asian Citrus Dressing\n\n~ 4 servings \n\n1 tsp soy sauce\n2 tsp rice vinegar\n2 tsp sesame oil\n2 tsp sriracha\n\u00bd  tsp HonDashi\n\u00bd  tsp bagel seasoning\n1 tbsp + 1 \u00bd tsp lemon juice\n1 tbsp + 1 \u00bd  tsp lime juice\n1 tbsp mayonnaise\n\nAdd to each serving:\n1 tsp sesame seeds\n1 avocado\n100g chicken, 70g salmon or tuna\n\n","photo":"","entries":[{"id":3,"date":"2026-03-28","ingredients":"1 egg, 6 pinches salt, 3 mandarins, 1 tsp sesame seeds, 8g whey, 60 ml kefir"}]},{"id":5,"name":"Chicken Waldorf Salad","instructions":"100g shredded chicken\n25 g mayonnaise\n45 g 2% plain Greek yogurt\n1/4 tsp Dijon mustard\n1/4 tsp stoneground mustard\n1 tsp fresh lemon juice\n1 medium apple (150\u2013180 g), diced small\n10 g red onion, finely minced\n10 g celery, finely diced\n10 g walnuts, toasted and roughly chopped\n1/4 tsp salt (adjust to taste)\n1 pinch black pepper\n1/4 tsp dried chives (or 1 tsp fresh)\npinch celery seed\n","photo":"","entries":[{"id":4,"date":"2026-03-30","ingredients":"see instructions"}]}],"nextMealId":6,"nextEntryId":5};
+
+var stored = loadData();
+var data = stored || SEED;
+
+// Make sure all meals have required fields
+data.meals.forEach(function(m) {
+  if (!m.instructions) m.instructions = '';
+  if (!m.photo) m.photo = '';
+  if (!m.entries) m.entries = [];
+});
+
+var openMeals = {};
+data.meals.forEach(function(m) { openMeals[m.id] = true; });
+
+function save() { saveData(data); }
+
+function fmtDate(d) {
+  if (!d) return '';
+  var parts = d.split('-');
+  return parseInt(parts[1]) + '/' + parseInt(parts[2]) + '/' + parts[0];
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function today() { return new Date().toISOString().split('T')[0]; }
+
+function render() {
+  var q = (document.getElementById('search').value || '').toLowerCase().trim();
+  var list = document.getElementById('meal-list');
+  var filtered = data.meals.filter(function(m) {
+    if (!q) return true;
+    if (m.name.toLowerCase().indexOf(q) >= 0) return true;
+    if (m.instructions && m.instructions.toLowerCase().indexOf(q) >= 0) return true;
+    return m.entries.some(function(e) { return e.ingredients.toLowerCase().indexOf(q) >= 0; });
+  });
+  if (!filtered.length) { list.innerHTML = '<div class="empty">No meals found.</div>'; return; }
+
+  var html = '';
+  filtered.forEach(function(m, i) {
+    var pal = getPalette(i);
+    var isOpen = openMeals[m.id];
+    var matchIngr = q && m.name.toLowerCase().indexOf(q) < 0;
+
+    var btnStyle = 'font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;border:none;background:' + pal.text + ';color:#fff;text-transform:uppercase';
+    var delStyle = 'font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;border:none;background:#8b1a1a;color:#fff;text-transform:uppercase';
+
+    html += '<div class="meal-card" style="background:' + pal.bg + ';border:1px solid ' + pal.border + ';border-radius:12px;overflow:hidden">';
+
+    // Header row
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;user-select:none" onclick="toggleMeal(' + m.id + ')">';
+    html += '<span style="font-size:14px;color:' + pal.text + ';flex-shrink:0">' + (isOpen ? '&#9660;' : '&#9654;') + '</span>';
+    html += '<span style="font-size:18px;font-weight:700;flex:1;color:' + pal.text + '">' + esc(m.name) + '</span>';
+    if (!m.photo) {
+      html += '<div onclick="event.stopPropagation();openPhotoModal(' + m.id + ')" style="font-size:12px;font-weight:600;padding:5px 10px;border-radius:8px;cursor:pointer;border:1px dashed rgba(0,0,0,0.3);background:rgba(255,255,255,0.4);color:' + pal.text + ';flex-shrink:0">+ PHOTO</div>';
+    }
+    html += '<span class="count-badge" style="color:' + pal.text + '">' + m.entries.length + ' ' + (m.entries.length === 1 ? 'NOTE' : 'NOTES') + '</span>';
+    html += '<div style="display:flex;gap:6px;flex-shrink:0" onclick="event.stopPropagation()">';
+    html += '<button style="' + btnStyle + '" onclick="openRenameMeal(' + m.id + ')">RENAME</button>';
+    html += '<button style="' + delStyle + '" onclick="deleteMeal(' + m.id + ')">DELETE</button>';
+    html += '</div></div>';
+
+    if (isOpen) {
+      html += '<div class="meal-inner" style="border-top:1px solid rgba(0,0,0,0.1)">';
+
+      // Photo - use contain so no stretching/distortion, neutral background
+      if (m.photo) {
+        html += '<div style="position:relative;margin-bottom:14px;background:#f0f0ec;border-radius:10px;overflow:hidden;text-align:center">';
+        html += '<img src="' + esc(m.photo) + '" style="max-width:100%;max-height:300px;object-fit:contain;display:block;margin:0 auto">';
+        html += '<button onclick="openPhotoModal(' + m.id + ')" style="position:absolute;bottom:10px;right:10px;font-size:12px;padding:4px 10px;border-radius:8px;background:rgba(0,0,0,0.5);color:#fff;border:none;cursor:pointer;text-transform:uppercase">CHANGE PHOTO</button></div>';
+      } else {
+        html += '<button onclick="openPhotoModal(' + m.id + ')" style="font-size:13px;font-weight:600;padding:8px 12px;border-radius:8px;cursor:pointer;border:1px dashed rgba(0,0,0,0.2);background:transparent;color:' + pal.text + ';width:100%;margin-bottom:14px;text-transform:uppercase">+ ADD A PHOTO</button>';
+      }
+
+      // Recipe (was Instructions)
+      html += '<div style="background:rgba(255,255,255,0.55);border-radius:8px;padding:12px 14px;margin-bottom:14px;border:1px solid rgba(0,0,0,0.1)">';
+      html += '<div style="font-size:12px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;color:' + pal.text + '">';
+      html += '<span>RECIPE</span><button style="' + btnStyle + '" onclick="openEditRecipe(' + m.id + ')">EDIT</button></div>';
+      if (m.instructions) {
+        html += '<div style="font-size:14px;line-height:1.6;white-space:pre-wrap;color:' + pal.text + '">' + esc(m.instructions) + '</div>';
+      } else {
+        html += '<div style="font-size:13px;opacity:0.6;color:' + pal.text + '">No recipe yet.</div>';
+      }
+      html += '</div>';
+
+      // Notes (was Entries)
+      html += '<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:' + pal.text + ';opacity:0.7">NOTES</div>';
+
+      var sortedEntries = m.entries.slice().sort(function(a,b) { return b.date > a.date ? 1 : -1; });
+      sortedEntries.forEach(function(e) {
+        var ingrs = e.ingredients.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+        html += '<div style="background:rgba(255,255,255,0.55);border-radius:8px;padding:12px 14px;margin-bottom:10px;border:1px solid rgba(0,0,0,0.1)">';
+        html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">';
+        html += '<span style="font-size:14px;font-weight:700;flex:1;color:' + pal.text + '">' + fmtDate(e.date) + '</span>';
+        html += '<div style="display:flex;gap:6px">';
+        html += '<button style="' + btnStyle + '" onclick="openEditNote(' + m.id + ',' + e.id + ')">EDIT</button>';
+        html += '<button style="' + delStyle + '" onclick="deleteNote(' + m.id + ',' + e.id + ')">DELETE</button>';
+        html += '</div></div>';
+        html += '<div style="display:flex;flex-wrap:wrap;gap:7px">';
+        ingrs.forEach(function(ing) {
+          var hi = q && ing.toLowerCase().indexOf(q) >= 0 && matchIngr;
+          html += '<span style="font-size:13px;background:' + (hi ? '#fff' : 'rgba(255,255,255,0.7)') + ';border:1px solid ' + (hi ? '#2563eb' : 'rgba(0,0,0,0.15)') + ';border-radius:8px;padding:4px 10px;color:' + (hi ? '#1e3a8a' : pal.text) + ';text-transform:uppercase">' + esc(ing) + '</span>';
+        });
+        html += '</div></div>';
+      });
+
+      html += '<button onclick="openAddNote(' + m.id + ')" style="font-size:13px;font-weight:700;padding:8px 12px;border-radius:8px;cursor:pointer;border:none;background:' + pal.text + ';color:#fff;width:100%;margin-top:8px;text-transform:uppercase">+ ADD NOTE</button>';
+      html += '</div>';
+    }
+
+    html += '</div>';
+  });
+
+  list.innerHTML = html;
+}
+
+function toggleMeal(id) {
+  openMeals[id] = !openMeals[id];
+  render();
+}
+
+function closeModal() { document.getElementById('modal-bg').classList.remove('open'); }
+function openModal(html) { document.getElementById('modal-inner').innerHTML = html; document.getElementById('modal-bg').classList.add('open'); }
+
+document.getElementById('modal-bg').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+function openPhotoModal(id) {
+  var m = data.meals.find(function(x) { return x.id === id; });
+  var html = '<h3>Add a Photo</h3><p class="modal-sub">' + esc(m.name) + '</p>';
+  html += '<div class="upload-zone" onclick="document.getElementById(\'pfi\').click()">';
+  html += '<input type="file" id="pfi" accept="image/*" onchange="handleFileUpload(' + id + ', this)">';
+  html += '<div style="font-size:32px;margin-bottom:8px">&#128444;</div>';
+  html += '<div style="font-size:14px;font-weight:700;margin-bottom:4px">CLICK TO CHOOSE A PHOTO</div>';
+  html += '<div style="font-size:12px;color:#888">JPG, PNG, GIF, WEBP</div></div>';
+  if (m.photo) {
+    html += '<div style="margin-top:12px;background:#f0f0ec;border-radius:8px;text-align:center;padding:8px"><img src="' + esc(m.photo) + '" style="max-width:100%;max-height:200px;object-fit:contain;display:block;margin:0 auto;border-radius:6px"></div>';
+  }
+  html += '<div class="modal-actions" style="margin-top:12px">';
+  if (m.photo) {
+    html += '<button style="font-size:12px;padding:5px 12px;border-radius:8px;background:#8b1a1a;color:#fff;cursor:pointer;border:none;margin-right:auto;text-transform:uppercase" onclick="removePhoto(' + id + ')">REMOVE PHOTO</button>';
+  }
+  html += '<button class="btn-cancel" onclick="closeModal()">Cancel</button></div>';
+  openModal(html);
+}
+
+function handleFileUpload(id, input) {
+  var file = input.files[0];
+  if (!file) return;
+  compressImage(file, function(compressed) {
+    data.meals.find(function(x) { return x.id === id; }).photo = compressed;
+    save(); closeModal(); render();
+  });
+}
+
+function removePhoto(id) {
+  data.meals.find(function(x) { return x.id === id; }).photo = '';
+  save(); closeModal(); render();
+}
+
+function openEditRecipe(id) {
+  var m = data.meals.find(function(x) { return x.id === id; });
+  var html = '<h3>Recipe</h3><p class="modal-sub">' + esc(m.name) + '</p>';
+  html += '<div class="field"><textarea id="ins-text" class="tall">' + esc(m.instructions || '') + '</textarea></div>';
+  html += '<div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="submitEditRecipe(' + id + ')">Save</button></div>';
+  openModal(html);
+}
+
+function submitEditRecipe(id) {
+  data.meals.find(function(x) { return x.id === id; }).instructions = document.getElementById('ins-text').value;
+  save(); closeModal(); render();
+}
+
+function openAddMeal() {
+  var html = '<h3>New Meal</h3>';
+  html += '<div class="field"><label>Meal Name</label><input id="m-name" type="text" placeholder="e.g. Lentil Soup"></div>';
+  html += '<div class="field"><label>Date (First Note)</label><input id="m-date" type="date" value="' + today() + '"></div>';
+  html += '<div class="field"><label>Ingredients (comma-separated)</label><textarea id="m-ingr"></textarea></div>';
+  html += '<div class="field"><label>Recipe (optional)</label><textarea id="m-ins" class="tall"></textarea></div>';
+  html += '<div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="submitAddMeal()">Add Meal</button></div>';
+  openModal(html);
+}
+
+function submitAddMeal() {
+  var name = document.getElementById('m-name').value.trim();
+  var date = document.getElementById('m-date').value;
+  var ingr = document.getElementById('m-ingr').value.trim();
+  var ins = document.getElementById('m-ins').value;
+  if (!name) { alert('Please enter a meal name.'); return; }
+  if (!date) { alert('Please enter a date.'); return; }
+  var meal = {id: data.nextMealId++, name: name, instructions: ins, photo: '', entries: []};
+  if (ingr) meal.entries.push({id: data.nextEntryId++, date: date, ingredients: ingr});
+  data.meals.push(meal);
+  openMeals[meal.id] = true;
+  save(); closeModal(); render();
+}
+
+function openRenameMeal(id) {
+  var m = data.meals.find(function(x) { return x.id === id; });
+  var html = '<h3>Rename Meal</h3>';
+  html += '<div class="field"><label>Meal Name</label><input id="r-name" type="text" value="' + esc(m.name) + '"></div>';
+  html += '<div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="submitRenameMeal(' + id + ')">Save</button></div>';
+  openModal(html);
+}
+
+function submitRenameMeal(id) {
+  var name = document.getElementById('r-name').value.trim();
+  if (!name) { alert('Name cannot be empty.'); return; }
+  data.meals.find(function(x) { return x.id === id; }).name = name;
+  save(); closeModal(); render();
+}
+
+function deleteMeal(id) {
+  var m = data.meals.find(function(x) { return x.id === id; });
+  if (!confirm('Delete ' + m.name + ' and all its notes?')) return;
+  data.meals = data.meals.filter(function(x) { return x.id !== id; });
+  delete openMeals[id];
+  save(); render();
+}
+
+function openAddNote(mealId) {
+  var html = '<h3>New Note</h3>';
+  html += '<div class="field"><label>Date</label><input id="e-date" type="date" value="' + today() + '"></div>';
+  html += '<div class="field"><label>Ingredients (comma-separated)</label><textarea id="e-ingr"></textarea></div>';
+  html += '<div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="submitAddNote(' + mealId + ')">Add Note</button></div>';
+  openModal(html);
+}
+
+function submitAddNote(mealId) {
+  var date = document.getElementById('e-date').value;
+  var ingr = document.getElementById('e-ingr').value.trim();
+  if (!date) { alert('Please enter a date.'); return; }
+  if (!ingr) { alert('Please enter ingredients.'); return; }
+  data.meals.find(function(x) { return x.id === mealId; }).entries.push({id: data.nextEntryId++, date: date, ingredients: ingr});
+  save(); closeModal(); render();
+}
+
+function openEditNote(mealId, entryId) {
+  var m = data.meals.find(function(x) { return x.id === mealId; });
+  var e = m.entries.find(function(x) { return x.id === entryId; });
+  var html = '<h3>Edit Note</h3>';
+  html += '<div class="field"><label>Date</label><input id="ed-date" type="date" value="' + e.date + '"></div>';
+  html += '<div class="field"><label>Ingredients (comma-separated)</label><textarea id="ed-ingr">' + esc(e.ingredients) + '</textarea></div>';
+  html += '<div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="submitEditNote(' + mealId + ',' + entryId + ')">Save</button></div>';
+  openModal(html);
+}
+
+function submitEditNote(mealId, entryId) {
+  var date = document.getElementById('ed-date').value;
+  var ingr = document.getElementById('ed-ingr').value.trim();
+  if (!date) { alert('Please enter a date.'); return; }
+  if (!ingr) { alert('Please enter ingredients.'); return; }
+  var m = data.meals.find(function(x) { return x.id === mealId; });
+  var e = m.entries.find(function(x) { return x.id === entryId; });
+  e.date = date; e.ingredients = ingr;
+  save(); closeModal(); render();
+}
+
+function deleteNote(mealId, entryId) {
+  if (!confirm('Delete this note?')) return;
+  var m = data.meals.find(function(x) { return x.id === mealId; });
+  m.entries = m.entries.filter(function(x) { return x.id !== entryId; });
+  save(); render();
+}
+
+render();
+</script>
+</body>
+</html>
