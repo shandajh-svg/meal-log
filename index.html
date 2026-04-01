@@ -437,11 +437,14 @@ function setSyncStatus(msg, cls) {
 }
 
 function pushToGoogle() {
+  // Strip photos before sending - keeps size small and photos safe on Mac
+  var dataNoPhotos = JSON.parse(JSON.stringify(data));
+  dataNoPhotos.meals.forEach(function(m) { m.photo = ''; });
   setSyncStatus("Saving...", "sync-pending");
   fetch(JBIN_URL, {
     method: "PUT",
     headers: {"Content-Type":"application/json","X-Master-Key":JBIN_KEY,"X-Bin-Versioning":"false"},
-    body: JSON.stringify(data)
+    body: JSON.stringify(dataNoPhotos)
   })
   .then(function(r){ return r.json(); })
   .then(function(){ setSyncStatus("Saved " + new Date().toLocaleTimeString(), "sync-ok"); })
@@ -458,11 +461,14 @@ function pullFromGoogle() {
   .then(function(resp){
     var d = resp.record;
     if(d && d.meals){
+      // Preserve existing Mac photos before overwriting - never wipe photos
+      var existingPhotos = {};
+      data.meals.forEach(function(m) { if(m.photo) existingPhotos[m.id] = m.photo; });
       data = d;
       data.meals.forEach(function(m) {
         if (!m.instructions) m.instructions = "";
-        if (!m.photo) m.photo = "";
         if (!m.entries) m.entries = [];
+        m.photo = existingPhotos[m.id] || "";
       });
       openMeals = {};
       data.meals.forEach(function(m) { openMeals[m.id] = true; });
@@ -479,3 +485,4 @@ function pullFromGoogle() {
 </script>
 </body>
 </html>
+
