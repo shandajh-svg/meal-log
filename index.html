@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meal Log Tracker</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23fffbcc'/><g transform='translate(50,50)'><circle cx='0' cy='0' r='28' fill='none' stroke='%23bf209f' stroke-width='5'/><line x1='-18' y1='-22' x2='-18' y2='22' stroke='%23bf209f' stroke-width='5' stroke-linecap='round'/><line x1='-18' y1='-8' x2='-10' y2='-8' stroke='%23bf209f' stroke-width='4' stroke-linecap='round'/><line x1='-10' y1='-22' x2='-10' y2='22' stroke='%23bf209f' stroke-width='5' stroke-linecap='round'/><line x1='10' y1='-22' x2='10' y2='4' stroke='%23bf209f' stroke-width='5' stroke-linecap='round'/><path d='M10 4 Q18 4 18 12 L18 22' stroke='%23bf209f' stroke-width='5' stroke-linecap='round' fill='none'/><path d='M10 -22 Q18 -22 18 -10 Q18 4 10 4' stroke='%23bf209f' stroke-width='5' stroke-linecap='round' fill='none'/></g></svg>">
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23fffbcc'/><g transform='translate(50,50)'><circle cx='0' cy='0' r='28' fill='none' stroke='%23bf209f' stroke-width='5'/><line x1='-18' y1='-22' x2='-18' y2='22' stroke='%23bf209f' stroke-width='5' stroke-linecap='round'/><line x1='-18' y1='-8' x2='-10' y2='-8' stroke='%23bf209f' stroke-width='4' stroke-linecap='round'/><line x1='-10' y1='-22' x2='-10' y2='22' stroke='%23bf209f' stroke-width='5' stroke-linecap='round'/><line x1='10' y1='-22' x2='10' y2='4' stroke='%23bf209f' stroke-width='5' stroke-linecap='round'/><path d='M10 4 Q18 4 18 12 L18 22' stroke='%23bf209f' stroke-width='5' stroke-linecap='round' fill='none'/><path d='M10 -22 Q18 -22 18 -10 Q18 4 10 4' stroke='%23bf209f' stroke-width='5' stroke-linecap='round' fill='none'/></g></svg>">
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAH0UlEQVR4nO2dOXbcSgxFQZ+vpShUpgVo6VqAM4VaigP/wKbVYjfHmh6Ae3Opi1XvFsCpe7LB/P718/foMcA4pqfXaejn9/5AAg9b9Baiy4cRerhCDxmafgDBhxq0FKHJPyb40IIWIlT9hwQfelBThCr/iODDCGqI8KP0HxB+GEWN7BUJQPhhNKUZvFRCCD4ocqUlOl0BCD+ociWbpwQg/KDO2YweFoDwgxfOZPWQAIQfvHE0s8WXQQE8sysAuz945Uh2NwUg/OCdvQyvCkD4IQpbWeYcAFLzUAB2f4jGWqapAJCaOwHY/SEqj7JNBYDUfBOA3R+is8w4FQBS808Adn/Iwm3WqQB/eX/+GD2EJkQ9rloggH2FJFpYoh5XTSazvO3Po2C8fb4MGMkXa2E9Oy7FY1Njenqd0laAtaBF2C0jH1tt0gqwhfegbO303o+tNikF2AtBhFYBCY4xZez/a/XZtdkK5tWxZZC9hFQV4P35I93utxfwbPOxJJUAWyjvhKVjUz620aQRQH2naz0+zgkek0aALZR3yJpjQ4J7UgjQ4uSyJj3DhwTfSSHAGgrh30J9fBFILYACIx5ZoAp8gQAD2XpkYaQEmUCAQaifl2QBAcQg/H1JIcBaqEb1uyp9ttq8jCCFAFv0XmxaHy1SCTA6YIRfjzQCvH2+DH1RJFNb4Yk0ApiNuf595AlUdv9x/Dd6AJkh+ONJVQHM+lYB9Z6ftiyhAGbjHwVQCP8W6uOrSUoBzNovsvruqj6+XqQVYIuW4VDfXdXHV5vUAuy1QldFYHf1Q2oBzHK+NB7xmK6SXgCzfmVfob1QvzLVGwT4y+grQzAGBLghsgR75zQZd38zBLijpQSqj19nDb8Zj0KE5ohwmcNvRgV4SGkVUGilvLdsvUCAFTx/HeHRl+qz7/5mtEBh4YT3GFSAAbRsT/aCT/i/gwAblL40rhQ2pbEogQCDaFEFOPE9DwI0ptUDd7XGkB0E6ISCCHAPAnRg6xspbimRAIGugQCdaNmGcMnzOgiwQe1d9chlSHbyviDABVrfJa4lAbv/PtwJXmH0k58jfjgjIwhwktsQKn2xLlwj5S/FHyFK2Kga2yDAA6KEfwky3IMAN0QN/iOQ4Q/pBcgU+jUyy5BSAEK/TjYZUglA8I+TRYTwAhD6ciLLEFYAgl+fiCKEE4DgtyeSCGEEIPj9iSBCCAFUw18zIBmOcQSuBVAIhUIAmIfruBVg1KJ7WGjm5jjuBOi9uB4XdQlzto4rAXot5JEFVGg7liiN24sEbgRQDBxs40ECeQEIvn+URZB+J5jwx0B5HWUFUJ40OI/qekoKoDpZUIbiujY7B1A82Foo97TM+znSfyuEcpivcOV4IkuzR3gBogW8BZm/rS6EAIS8LQo/+tcKlwIQeB2Wa+FNCBcCEHg/eBNCWgCC7595DVVFkBSA4MdDVQQpAQh+fNREkLkTTPhzobLeMgIAjAABIDUyAqj0hNAHlfWWOgmeJ0WlP4T6qAR/RkqAGUSIh1rwZ7q8Ell68IjgF/W1l6wAS5aTiBC6qO70a7gQYAlC6OAt8Euat0CjJwg5yom8hi4rwBn2Fg9Bxgd8JOEF2OPK4itLkznMV2jaAtUKF4vql1rr2WrTcVEBvL1kkRnl6vgIFwIsoUpo4C3sj5ASoGRCI7+4PZIWIX/7fJFZk2YCqBygWe6v/djDyy7+/vzBF2O1IsqXSXkJsxIIcBHCFgOZ9wEIVC5U1ltGAIARIACkBgEgNQgAqUEASA0CQGoQAFKDAJAaBIDUNBNA5U4fxKBVnmQqgOLDZdAOlfWWEQBgBAgAqWkqAOcBUIOWOZKqACp9IbRFaZ2lBADoTXMBaIOghNb5kasASuUR6qO2vnICAPSkiwBny5jaLgF1OLuuPdpnKgCkppsAVIHcKO7+ZuIVAAlioLyOXQXgkigcoWdOulcAWqFcqLY+M9It0AwS+MTDug0RIMqX0cI6Sr8Cs8WwCoAEcfESfrPBLRASxMNT+M2cnAMsQQJNPK7LcAGu2u9xsiNzdT1GXxofLoAZEnjHa/jNGv9O8Fl6TiTy3NNzHhXCbyZSAWaoBL7wHn4zMQHMkMALEcJvJiiAWZkEiNCWkjlWC7+ZqABmZZOFBG0omVfF8JuZ/ZieXqfRg1ijVAJEqEPpXKqGf3p6neR/J3ievKsLMP+d6iIoU7qBeJhz2RZoSelkUhGOU2OuPITfzGwyM1O6F7AHIdbHTfifXqd//b8nCcwQQREvwTf7E34zRy3QEk+TnQGv6+G2AtxCNRiH2+AvK4Dy5dA9vC6Cd7zO+23Wv4XecxWYoRq0x2vwZ1YFMIshgRkitMB78M3uO52wAswgQjkRgj+zK4BZPAlmkOE4kUI/8+g8N5UAM4iwTsTgzxwWwCy+BDPIEDv0M2tXOdMLMJNRhAzBnzktgFk+CW6JKESmwN+ydY9r9+ZXZglu8ShE1sDfsneD99DdXyR4jJIUhP2eI083IEAjWshByM9RTQAzJABfHH227fDj0J4floNcnMnqqfcBkADUOZvR0y/EIAGociWbRWHmvAAUKNmUi16JpBrAaEozWPxOMBLAKGpkr2p4aYmgBzU33Sa7NyJAC1p0G03bF0SAGrRss7v074gAV+hxftn9BBYZYIveF1WGX8FBiNyMvor4P8pv0RseugRUAAAAAElFTkSuQmCC">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAH0UlEQVR4nO2dOXbcSgxFQZ+vpShUpgVo6VqAM4VaigP/wKbVYjfHmh6Ae3Opi1XvFsCpe7LB/P718/foMcA4pqfXaejn9/5AAg9b9Baiy4cRerhCDxmafgDBhxq0FKHJPyb40IIWIlT9hwQfelBThCr/iODDCGqI8KP0HxB+GEWN7BUJQPhhNKUZvFRCCD4ocqUlOl0BCD+ociWbpwQg/KDO2YweFoDwgxfOZPWQAIQfvHE0s8WXQQE8sysAuz945Uh2NwUg/OCdvQyvCkD4IQpbWeYcAFLzUAB2f4jGWqapAJCaOwHY/SEqj7JNBYDUfBOA3R+is8w4FQBS808Adn/Iwm3WqQB/eX/+GD2EJkQ9rloggH2FJFpYoh5XTSazvO3Po2C8fb4MGMkXa2E9Oy7FY1Njenqd0laAtaBF2C0jH1tt0gqwhfegbO303o+tNikF2AtBhFYBCY4xZez/a/XZtdkK5tWxZZC9hFQV4P35I93utxfwbPOxJJUAWyjvhKVjUz620aQRQH2naz0+zgkek0aALZR3yJpjQ4J7UgjQ4uSyJj3DhwTfSSHAGgrh30J9fBFILYACIx5ZoAp8gQAD2XpkYaQEmUCAQaifl2QBAcQg/H1JIcBaqEb1uyp9ttq8jCCFAFv0XmxaHy1SCTA6YIRfjzQCvH2+DH1RJFNb4Yk0ApiNuf595AlUdv9x/Dd6AJkh+ONJVQHM+lYB9Z6ftiyhAGbjHwVQCP8W6uOrSUoBzNovsvruqj6+XqQVYIuW4VDfXdXHV5vUAuy1QldFYHf1Q2oBzHK+NB7xmK6SXgCzfmVfob1QvzLVGwT4y+grQzAGBLghsgR75zQZd38zBLijpQSqj19nDb8Zj0KE5ohwmcNvRgV4SGkVUGilvLdsvUCAFTx/HeHRl+qz7/5mtEBh4YT3GFSAAbRsT/aCT/i/gwAblL40rhQ2pbEogQCDaFEFOPE9DwI0ptUDd7XGkB0E6ISCCHAPAnRg6xspbimRAIGugQCdaNmGcMnzOgiwQe1d9chlSHbyviDABVrfJa4lAbv/PtwJXmH0k58jfjgjIwhwktsQKn2xLlwj5S/FHyFK2Kga2yDAA6KEfwky3IMAN0QN/iOQ4Q/pBcgU+jUyy5BSAEK/TjYZUglA8I+TRYTwAhD6ciLLEFYAgl+fiCKEE4DgtyeSCGEEIPj9iSBCCAFUw18zIBmOcQSuBVAIhUIAmIfruBVg1KJ7WGjm5jjuBOi9uB4XdQlzto4rAXot5JEFVGg7liiN24sEbgRQDBxs40ECeQEIvn+URZB+J5jwx0B5HWUFUJ40OI/qekoKoDpZUIbiujY7B1A82Foo97TM+znSfyuEcpivcOV4IkuzR3gBogW8BZm/rS6EAIS8LQo/+tcKlwIQeB2Wa+FNCBcCEHg/eBNCWgCC7595DVVFkBSA4MdDVQQpAQh+fNREkLkTTPhzobLeMgIAjAABIDUyAqj0hNAHlfWWOgmeJ0WlP4T6qAR/RkqAGUSIh1rwZ7q8Ell68IjgF/W1l6wAS5aTiBC6qO70a7gQYAlC6OAt8Euat0CjJwg5yom8hi4rwBn2Fg9Bxgd8JOEF2OPK4itLkznMV2jaAtUKF4vql1rr2WrTcVEBvL1kkRnl6vgIFwIsoUpo4C3sj5ASoGRCI7+4PZIWIX/7fJFZk2YCqBygWe6v/djDyy7+/vzBF2O1IsqXSXkJsxIIcBHCFgOZ9wEIVC5U1ltGAIARIACkBgEgNQgAqUEASA0CQGoQAFKDAJAaBIDUNBNA5U4fxKBVnmQqgOLDZdAOlfWWEQBgBAgAqWkqAOcBUIOWOZKqACp9IbRFaZ2lBADoTXMBaIOghNb5kasASuUR6qO2vnICAPSkiwBny5jaLgF1OLuuPdpnKgCkppsAVIHcKO7+ZuIVAAlioLyOXQXgkigcoWdOulcAWqFcqLY+M9It0AwS+MTDug0RIMqX0cI6Sr8Cs8WwCoAEcfESfrPBLRASxMNT+M2cnAMsQQJNPK7LcAGu2u9xsiNzdT1GXxofLoAZEnjHa/jNGv9O8Fl6TiTy3NNzHhXCbyZSAWaoBL7wHn4zMQHMkMALEcJvJiiAWZkEiNCWkjlWC7+ZqABmZZOFBG0omVfF8JuZ/ZieXqfRg1ijVAJEqEPpXKqGf3p6neR/J3ievKsLMP+d6iIoU7qBeJhz2RZoSelkUhGOU2OuPITfzGwyM1O6F7AHIdbHTfifXqd//b8nCcwQQREvwTf7E34zRy3QEk+TnQGv6+G2AtxCNRiH2+AvK4Dy5dA9vC6Cd7zO+23Wv4XecxWYoRq0x2vwZ1YFMIshgRkitMB78M3uO52wAswgQjkRgj+zK4BZPAlmkOE4kUI/8+g8N5UAM4iwTsTgzxwWwCy+BDPIEDv0M2tXOdMLMJNRhAzBnzktgFk+CW6JKESmwN+ydY9r9+ZXZglu8ShE1sDfsneD99DdXyR4jJIUhP2eI083IEAjWshByM9RTQAzJABfHH227fDj0J4floNcnMnqqfcBkADUOZvR0y/EIAGociWbRWHmvAAUKNmUi16JpBrAaEozWPxOMBLAKGpkr2p4aYmgBzU33Sa7NyJAC1p0G03bF0SAGrRss7v074gAV+hxftn9BBYZYIveF1WGX8FBiNyMvor4P8pv0RseugRUAAAAAElFTkSuQmCC">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Meal Log">
@@ -59,10 +59,7 @@ body{font-family:system-ui,sans-serif;background:#f5f4f0;color:#1a1a1a;padding:1
 var STORAGE_KEY = 'meal_log_v1';
 
 function loadData() {
-  try {
-    var s = localStorage.getItem(STORAGE_KEY);
-    if (s) return JSON.parse(s);
-  } catch(e) {}
+  try { var s = localStorage.getItem(STORAGE_KEY); if (s) return JSON.parse(s); } catch(e) {}
   return null;
 }
 
@@ -95,10 +92,7 @@ function importBackup(input) {
   reader.onload = function(e) {
     try {
       var imported = JSON.parse(e.target.result);
-      if (!imported.meals || !Array.isArray(imported.meals)) {
-        alert('Invalid backup file.');
-        return;
-      }
+      if (!imported.meals || !Array.isArray(imported.meals)) { alert('Invalid backup file.'); return; }
       if (!confirm('This will replace all current data with the backup. Continue?')) return;
       data = imported;
       data.meals.forEach(function(m) {
@@ -109,12 +103,9 @@ function importBackup(input) {
       });
       openMeals = {};
       data.meals.forEach(function(m) { openMeals[m.id] = true; });
-      save();
-      render();
+      save(); render();
       alert('Backup imported successfully!');
-    } catch(err) {
-      alert('Could not read file. Make sure it is a valid meal log backup JSON file.');
-    }
+    } catch(err) { alert('Could not read file. Make sure it is a valid meal log backup JSON file.'); }
   };
   reader.readAsText(file);
   input.value = '';
@@ -150,13 +141,11 @@ var PALETTES = [
 
 function getPalette(idx) { return PALETTES[idx % PALETTES.length]; }
 
-// Seed from backup data
-var SEED = {"meals": [{"id": 1, "name": "Chicken noodle soup", "hasRecipe": true, "instructions": "shred chicken: Put 2 large breasts in pot and add water to cover by 1/4\". Add 2 tsp salt. Once it reaches simmer on med heat, turn heat off and quickly cover with lid & let sit 15 minutes. remove from liquid and let sit another 10-20 minutes.\n\n24 oz package Reames Egg Noodles = (14) 48g servings. Take 48g noodles & add to pot with 1 serving bone broth, 200 mL water, 1 carrot, 1 rib celery, 25g yellow onion, 2 cups water & 1 1/4 tsp better than bouillon roasted chicken base reduced sodium. simmer for 15 minutes. add 100g shredded chicken & scallions at the end.\n", "photo": "", "entries": [{"id": 1, "date": "2026-03-25", "ingredients": "60g kefir, 1 egg, 3 mandarins, 1/4 tsp nosalt"}]}, {"id": 2, "name": "Thin crust pizza", "hasRecipe": false, "instructions": "", "photo": "", "entries": [{"id": 4, "date": "2026-04-01", "ingredients": "1/4+1/8 tsp nosalt, 60ml kefir, 3 mandarins, 1 egg"}]}], "nextMealId": 6, "nextEntryId": 6};
+var SEED = {"meals":[{"id":1,"name":"Chicken noodle soup","hasRecipe":true,"instructions":"shred chicken: Put 2 large breasts in pot and add water to cover by 1/4\". Add 2 tsp salt. Once it reaches simmer on med heat, turn heat off and quickly cover with lid & let sit 15 minutes. remove from liquid and let sit another 10-20 minutes.\n\n24 oz package Reames Egg Noodles = (14) 48g servings. Take 48g noodles & add to pot with 1 serving bone broth, 200 mL water, 1 carrot, 1 rib celery, 25g yellow onion, 2 cups water & 1 1/4 tsp better than bouillon roasted chicken base reduced sodium. simmer for 15 minutes. add 100g shredded chicken & scallions at the end.\n","photo":"","entries":[{"id":1,"date":"2026-03-25","ingredients":"60g kefir, 1 egg, 3 mandarins, 1/4 tsp nosalt"}]},{"id":2,"name":"Thin crust pizza","hasRecipe":false,"instructions":"","photo":"","entries":[{"id":4,"date":"2026-04-01","ingredients":"1/4+1/8 tsp nosalt, 60ml kefir, 3 mandarins, 1 egg"}]}],"nextMealId":6,"nextEntryId":6};
 
 var stored = loadData();
 var data = stored || SEED;
 
-// Make sure all meals have required fields
 data.meals.forEach(function(m) {
   if (!m.instructions) m.instructions = '';
   if (m.hasRecipe === undefined) m.hasRecipe = !!m.instructions;
@@ -164,8 +153,19 @@ data.meals.forEach(function(m) {
   if (!m.entries) m.entries = [];
 });
 
+// openMeals tracks collapsed state - NOT synced, stays local per device
 var openMeals = {};
-data.meals.forEach(function(m) { openMeals[m.id] = true; });
+data.meals.forEach(function(m) { openMeals[m.id] = false; });
+
+// Load saved open/close state from localStorage separately
+try {
+  var savedOpen = localStorage.getItem('meal_log_open_state');
+  if (savedOpen) openMeals = JSON.parse(savedOpen);
+} catch(e) {}
+
+function saveOpenState() {
+  try { localStorage.setItem('meal_log_open_state', JSON.stringify(openMeals)); } catch(e) {}
+}
 
 function save() { saveData(data); }
 
@@ -176,11 +176,7 @@ function fmtDate(d) {
 }
 
 function esc(s) {
-  return String(s)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function today() { return new Date().toISOString().split('T')[0]; }
@@ -201,13 +197,10 @@ function render() {
     var pal = getPalette(i);
     var isOpen = openMeals[m.id];
     var matchIngr = q && m.name.toLowerCase().indexOf(q) < 0;
-
     var btnStyle = 'font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;border:none;background:' + pal.text + ';color:#fff;text-transform:uppercase';
     var delStyle = 'font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;border:none;background:#8b1a1a;color:#fff;text-transform:uppercase';
 
     html += '<div class="meal-card" style="background:' + pal.bg + ';border:1px solid ' + pal.border + ';border-radius:12px;overflow:hidden">';
-
-    // Header row — removed note count badge
     html += '<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;user-select:none" onclick="toggleMeal(' + m.id + ')">';
     html += '<span style="font-size:14px;color:' + pal.text + ';flex-shrink:0">' + (isOpen ? '&#9660;' : '&#9654;') + '</span>';
     html += '<span style="font-size:18px;font-weight:700;flex:1;color:' + pal.text + '">' + esc(m.name) + '</span>';
@@ -222,7 +215,6 @@ function render() {
     if (isOpen) {
       html += '<div class="meal-inner" style="border-top:1px solid rgba(0,0,0,0.1)">';
 
-      // Photo
       if (m.photo) {
         html += '<div style="position:relative;margin-bottom:14px;background:#f0f0ec;border-radius:10px;overflow:hidden;text-align:center">';
         html += '<img src="' + esc(m.photo) + '" style="max-width:100%;max-height:300px;object-fit:contain;display:block;margin:0 auto">';
@@ -231,12 +223,10 @@ function render() {
         html += '<button onclick="openPhotoModal(' + m.id + ')" style="font-size:13px;font-weight:600;padding:8px 12px;border-radius:8px;cursor:pointer;border:1px dashed rgba(0,0,0,0.2);background:transparent;color:' + pal.text + ';width:100%;margin-bottom:14px;text-transform:uppercase">+ ADD A PHOTO</button>';
       }
 
-      // Recipe section — only shown if hasRecipe is true, with delete option; otherwise show Add Recipe button
       if (m.hasRecipe) {
         html += '<div style="background:rgba(255,255,255,0.55);border-radius:8px;padding:12px 14px;margin-bottom:14px;border:1px solid rgba(0,0,0,0.1)">';
         html += '<div style="font-size:12px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;color:' + pal.text + '">';
-        html += '<span>RECIPE</span>';
-        html += '<div style="display:flex;gap:6px">';
+        html += '<span>RECIPE</span><div style="display:flex;gap:6px">';
         html += '<button style="' + btnStyle + '" onclick="openEditRecipe(' + m.id + ')">EDIT</button>';
         html += '<button style="' + delStyle + '" onclick="deleteRecipe(' + m.id + ')">DELETE RECIPE</button>';
         html += '</div></div>';
@@ -250,9 +240,7 @@ function render() {
         html += '<button onclick="addRecipe(' + m.id + ')" style="font-size:13px;font-weight:700;padding:8px 12px;border-radius:8px;cursor:pointer;border:1px dashed rgba(0,0,0,0.2);background:transparent;color:' + pal.text + ';width:100%;margin-bottom:14px;text-transform:uppercase">+ ADD RECIPE</button>';
       }
 
-      // Notes
       html += '<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:' + pal.text + ';opacity:0.7">NOTES</div>';
-
       var sortedEntries = m.entries.slice().sort(function(a,b) { return b.date > a.date ? 1 : -1; });
       sortedEntries.forEach(function(e) {
         var ingrs = e.ingredients.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
@@ -266,31 +254,28 @@ function render() {
         html += '<div style="display:flex;flex-wrap:wrap;gap:7px">';
         ingrs.forEach(function(ing) {
           var hi = q && ing.toLowerCase().indexOf(q) >= 0 && matchIngr;
-          html += '<span style="font-size:13px;background:' + (hi ? '#fff' : 'rgba(255,255,255,0.7)') + ';border:1px solid ' + (hi ? '#2563eb' : 'rgba(0,0,0,0.15)') + ';border-radius:8px;padding:4px 10px;color:' + (hi ? '#1e3a8a' : pal.text) + ';text-transform:uppercase">' + esc(ing) + '</span>';
+          html += '<span style="font-size:13px;background:' + (hi?'#fff':'rgba(255,255,255,0.7)') + ';border:1px solid ' + (hi?'#2563eb':'rgba(0,0,0,0.15)') + ';border-radius:8px;padding:4px 10px;color:' + (hi?'#1e3a8a':pal.text) + ';text-transform:uppercase">' + esc(ing) + '</span>';
         });
         html += '</div></div>';
       });
-
       html += '<button onclick="openAddNote(' + m.id + ')" style="font-size:13px;font-weight:700;padding:8px 12px;border-radius:8px;cursor:pointer;border:none;background:' + pal.text + ';color:#fff;width:100%;margin-top:8px;text-transform:uppercase">+ ADD NOTE</button>';
       html += '</div>';
     }
-
     html += '</div>';
   });
-
   list.innerHTML = html;
 }
 
 function toggleMeal(id) {
   openMeals[id] = !openMeals[id];
+  saveOpenState();
   render();
 }
 
 function deleteRecipe(id) {
   if (!confirm('Delete the recipe for this meal?')) return;
   var m = data.meals.find(function(x) { return x.id === id; });
-  m.hasRecipe = false;
-  m.instructions = '';
+  m.hasRecipe = false; m.instructions = '';
   save(); render();
 }
 
@@ -304,9 +289,7 @@ function addRecipe(id) {
 function closeModal() { document.getElementById('modal-bg').classList.remove('open'); }
 function openModal(html) { document.getElementById('modal-inner').innerHTML = html; document.getElementById('modal-bg').classList.add('open'); }
 
-document.getElementById('modal-bg').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
+document.getElementById('modal-bg').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 
 function openPhotoModal(id) {
   var m = data.meals.find(function(x) { return x.id === id; });
@@ -375,6 +358,7 @@ function submitAddMeal() {
   if (ingr) meal.entries.push({id: data.nextEntryId++, date: date, ingredients: ingr});
   data.meals.push(meal);
   openMeals[meal.id] = true;
+  saveOpenState();
   save(); closeModal(); render();
 }
 
@@ -398,6 +382,7 @@ function deleteMeal(id) {
   if (!confirm('Delete ' + m.name + ' and all its notes?')) return;
   data.meals = data.meals.filter(function(x) { return x.id !== id; });
   delete openMeals[id];
+  saveOpenState();
   save(); render();
 }
 
@@ -448,7 +433,6 @@ function deleteNote(mealId, entryId) {
 
 render();
 
-// JSONBIN SYNC
 var JBIN_URL = "https://api.jsonbin.io/v3/b/69ccad06aaba882197b2fcee";
 var JBIN_KEY = "$2a$10$tpjsSaIqmjzoWXjpvpu7n.AdJJdQf8JUbDhBDfNoCC5rzN0vxDh/m";
 
@@ -473,10 +457,7 @@ function pushToGoogle() {
 
 function pullFromGoogle() {
   setSyncStatus("Loading...", "sync-pending");
-  fetch(JBIN_URL + "/latest", {
-    method: "GET",
-    headers: {"X-Master-Key":JBIN_KEY}
-  })
+  fetch(JBIN_URL + "/latest", {method:"GET", headers:{"X-Master-Key":JBIN_KEY}})
   .then(function(r){ return r.json(); })
   .then(function(resp){
     var d = resp.record;
@@ -490,8 +471,10 @@ function pullFromGoogle() {
         if (!m.entries) m.entries = [];
         m.photo = existingPhotos[m.id] || "";
       });
-      openMeals = {};
-      data.meals.forEach(function(m) { openMeals[m.id] = true; });
+      // Do NOT overwrite openMeals - keep local collapsed state
+      data.meals.forEach(function(m) {
+        if (openMeals[m.id] === undefined) openMeals[m.id] = false;
+      });
       save();
       render();
       setSyncStatus("Loaded " + new Date().toLocaleTimeString(), "sync-ok");
@@ -501,7 +484,6 @@ function pullFromGoogle() {
   })
   .catch(function(){ setSyncStatus("Could not connect", "sync-err"); });
 }
-
 </script>
 </body>
 </html>
