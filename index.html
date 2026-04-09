@@ -460,18 +460,13 @@ function openMealEditor(id) {
   html += '<div class="field" style="margin-bottom:0"><label>Ingredients <span style="font-weight:400;text-transform:none">(type each and press Enter)</span></label>' + buildTagInputHTML() + '</div>';
   html += '</div>';
 
-  // Recipe — only show textarea if hasRecipe, otherwise a small add button
+  // Recipe — always show, compact min-height
   html += '<div style="border-bottom:1px solid #eee;padding-bottom:14px;margin-bottom:14px">';
   html += '<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:#333">RECIPE</div>';
-  if (hasRecipe) {
-    html += '<div class="field" style="margin-bottom:0"><textarea id="ed-ins" class="tall">' + esc(m.instructions || '') + '</textarea></div>';
-  } else {
-    html += '<div style="font-size:13px;color:#999;margin-bottom:4px">No recipe yet.</div>';
-    html += '<textarea id="ed-ins" style="display:none"></textarea>';
-  }
+  html += '<div class="field" style="margin-bottom:0"><textarea id="ed-ins" style="width:100%;font-size:14px;padding:8px;border:1px solid #ccc;border-radius:8px;font-family:inherit;resize:vertical;min-height:44px">' + esc(m.instructions || '') + '</textarea></div>';
   html += '</div>';
 
-  // Notes — only show if there are notes
+  // Notes — show existing, plus inline add-note row
   html += '<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:#333">NOTES</div>';
   if (hasNotes) {
     var sorted = m.notes.slice().sort(function(a,b){ return b.date > a.date ? 1 : -1; });
@@ -480,12 +475,15 @@ function openMealEditor(id) {
       html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">';
       html += '<input type="date" value="' + n.date + '" onchange="updateNoteDate(' + id + ',' + n.id + ',this.value)" style="font-size:12px;border:1px solid #ccc;border-radius:6px;padding:3px 6px">';
       html += '</div>';
-      html += '<textarea onchange="updateNoteText(' + id + ',' + n.id + ',this.value)" style="width:100%;font-size:13px;padding:6px;border:1px solid #ccc;border-radius:6px;resize:vertical;min-height:60px;font-family:inherit">' + esc(n.text) + '</textarea>';
+      html += '<textarea onchange="updateNoteText(' + id + ',' + n.id + ',this.value)" style="width:100%;font-size:13px;padding:6px;border:1px solid #ccc;border-radius:6px;resize:vertical;min-height:44px;font-family:inherit">' + esc(n.text) + '</textarea>';
       html += '</div>';
     });
-  } else {
-    html += '<div style="font-size:13px;color:#999;margin-bottom:10px">No notes yet.</div>';
   }
+  html += '<div style="background:#f8f8f8;border:1px dashed #ccc;border-radius:8px;padding:10px 12px;margin-bottom:8px">';
+  html += '<div style="font-size:11px;font-weight:700;color:#999;margin-bottom:6px">ADD NOTE</div>';
+  html += '<input type="date" id="ed-note-date" value="' + today() + '" style="font-size:12px;border:1px solid #ccc;border-radius:6px;padding:3px 6px;margin-bottom:6px">';
+  html += '<textarea id="ed-note-text" placeholder="Note text..." style="width:100%;font-size:13px;padding:6px;border:1px solid #ccc;border-radius:6px;resize:vertical;min-height:44px;font-family:inherit;display:block;margin-top:4px"></textarea>';
+  html += '</div>';
 
   html += '</div>'; // end modal-scroll
 
@@ -505,6 +503,9 @@ function submitMealEditor(id) {
   var ins = document.getElementById('ed-ins').value;
   m.instructions = ins;
   m.hasRecipe = !!(ins.trim());
+    var noteText = (document.getElementById("ed-note-text").value || "").trim();
+  var noteDate = document.getElementById("ed-note-date").value;
+  if (noteText && noteDate) { if (!m.notes) m.notes = []; m.notes.push({id: data.nextEntryId++, date: noteDate, text: noteText}); }
   save(); closeModal(); render();
 }
 
@@ -550,7 +551,7 @@ function openAddMeal() {
   html += '<div class="field"><label>Meal Name</label><input id="m-name" type="text" placeholder="e.g. Lentil Soup"></div>';
   html += '<div class="field"><label>Cronometer Date</label><input id="m-date" type="date" value="' + today() + '"></div>';
   html += '<div class="field"><label>Ingredients <span style="font-weight:400;text-transform:none">(type each item and press Enter)</span></label>' + buildTagInputHTML() + '</div>';
-  html += '<div class="field"><label>Recipe</label><textarea id="m-ins" class="tall"></textarea></div>';
+  html += '<div class="field"><label>Recipe</label><textarea id="m-ins" style="width:100%;font-size:14px;padding:8px;border:1px solid #ccc;border-radius:8px;font-family:inherit;resize:vertical;min-height:44px"></textarea></div>';
   html += '</div>';
   html += '<div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="submitAddMeal()">Add Meal</button></div>';
   openModal(html, 'm-name');
