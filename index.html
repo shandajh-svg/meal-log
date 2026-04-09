@@ -120,7 +120,7 @@ function tagKeydown(e) {
 
 function buildTagInputHTML() {
   return '<div class="tag-input-wrapper" id="tag-input-wrapper" onclick="document.getElementById(\'tag-field\').focus()">' +
-    '<input type="text" id="tag-field" placeholder="Type and press Enter..." onkeydown="tagKeydown(event)" onblur="addTagFromInput()">' +
+    '<input type="text" id="tag-field" placeholder="" onkeydown="tagKeydown(event)" onblur="addTagFromInput()">' +
     '</div>';
 }
 
@@ -206,17 +206,10 @@ function compressImage(file, cb) {
 }
 
 var PALETTES = [
-  {bg:'#dbeafe',border:'#93c5fd',text:'#1e3a5f'},
-  {bg:'#dcfce7',border:'#86efac',text:'#14532d'},
-  {bg:'#fef3c7',border:'#fcd34d',text:'#78350f'},
-  {bg:'#fce7f3',border:'#f9a8d4',text:'#831843'},
-  {bg:'#ede9fe',border:'#c4b5fd',text:'#3b0764'},
-  {bg:'#ffedd5',border:'#fdba74',text:'#7c2d12'},
-  {bg:'#cffafe',border:'#67e8f9',text:'#164e63'},
-  {bg:'#f0fdf4',border:'#6ee7b7',text:'#064e3b'}
+  {bg:'#fdf8f2',border:'#e0d5c5',text:'#3a2e1e'}
 ];
 
-function getPalette(idx) { return PALETTES[idx % PALETTES.length]; }
+function getPalette(idx) { return PALETTES[0]; }
 
 var SEED = {"meals":[
   {"id":1,"name":"Chicken noodle soup","hasRecipe":true,"instructions":"shred chicken: Put 2 large breasts in pot and add water to cover by 1/4\". Add 2 tsp salt. Once it reaches simmer on med heat, turn heat off and quickly cover with lid & let sit 15 minutes. remove from liquid and let sit another 10-20 minutes.\n\n24 oz package Reames Egg Noodles = (14) 48g servings. Take 48g noodles & add to pot with 1 serving bone broth, 200 mL water, 1 carrot, 1 rib celery, 25g yellow onion, 2 cups water & 1 1/4 tsp better than bouillon roasted chicken base reduced sodium. simmer for 15 minutes. add 100g shredded chicken & scallions at the end.\n","photo":"",
@@ -370,8 +363,7 @@ function render() {
         var sortedNotes = m.notes.slice().sort(function(a,b) { return b.date > a.date ? 1 : -1; });
         sortedNotes.forEach(function(n) {
           html += '<div style="background:rgba(255,255,255,0.55);border-radius:8px;padding:12px 14px;margin-bottom:10px;border:1px solid rgba(0,0,0,0.1)">';
-          html += '<div style="font-size:12px;font-weight:700;margin-bottom:4px;color:#1a1a1a">' + fmtDate(n.date) + '</div>';
-          html += '<div style="font-size:14px;line-height:1.6;white-space:pre-wrap;color:#1a1a1a">' + esc(n.text) + '</div>';
+                    html += '<div style="font-size:14px;line-height:1.6;white-space:pre-wrap;color:#1a1a1a">' + esc(n.text) + '</div>';
           html += '</div>';
         });
       }
@@ -461,7 +453,7 @@ function openMealEditor(id) {
   html += '<div style="border-bottom:1px solid #eee;padding-bottom:14px;margin-bottom:14px">';
   html += '<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:#333">INGREDIENTS</div>';
   html += '<div class="field" style="margin-bottom:8px"><label>Cronometer Date</label><input id="ed-cron-date" type="date" value="' + (m.cronDate || '') + '"></div>';
-  html += '<div class="field" style="margin-bottom:0"><label>Ingredients <span style="font-weight:400;text-transform:none">(type each and press Enter)</span></label>' + buildTagInputHTML() + '</div>';
+  html += '<div class="field" style="margin-bottom:0"><label>Ingredients</label>' + buildTagInputHTML() + '</div>';
   html += '</div>';
 
   // Recipe — always show, compact min-height
@@ -476,17 +468,13 @@ function openMealEditor(id) {
     var sorted = m.notes.slice().sort(function(a,b){ return b.date > a.date ? 1 : -1; });
     sorted.forEach(function(n) {
       html += '<div style="background:#f8f8f8;border:1px solid #ddd;border-radius:8px;padding:10px 12px;margin-bottom:8px">';
-      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">';
-      html += '<input type="date" value="' + n.date + '" onchange="updateNoteDate(' + id + ',' + n.id + ',this.value)" style="font-size:12px;border:1px solid #ccc;border-radius:6px;padding:3px 6px">';
-      html += '</div>';
       html += '<textarea onchange="updateNoteText(' + id + ',' + n.id + ',this.value)" style="width:100%;font-size:13px;padding:6px;border:1px solid #ccc;border-radius:6px;resize:vertical;min-height:44px;font-family:inherit">' + esc(n.text) + '</textarea>';
       html += '</div>';
     });
   }
   html += '<div style="background:#f8f8f8;border:1px dashed #ccc;border-radius:8px;padding:10px 12px;margin-bottom:8px">';
   html += '<div style="font-size:11px;font-weight:700;color:#999;margin-bottom:6px">ADD NOTE</div>';
-  html += '<input type="date" id="ed-note-date" value="' + today() + '" style="font-size:12px;border:1px solid #ccc;border-radius:6px;padding:3px 6px;margin-bottom:6px">';
-  html += '<textarea id="ed-note-text" placeholder="Note text..." style="width:100%;font-size:13px;padding:6px;border:1px solid #ccc;border-radius:6px;resize:vertical;min-height:44px;font-family:inherit;display:block;margin-top:4px"></textarea>';
+    html += '<textarea id="ed-note-text" placeholder="Note text..." style="width:100%;font-size:13px;padding:6px;border:1px solid #ccc;border-radius:6px;resize:vertical;min-height:44px;font-family:inherit;display:block;margin-top:4px"></textarea>';
   html += '</div>';
 
   html += '</div>'; // end modal-scroll
@@ -508,8 +496,7 @@ function submitMealEditor(id) {
   m.instructions = ins;
   m.hasRecipe = !!(ins.trim());
     var noteText = (document.getElementById("ed-note-text").value || "").trim();
-  var noteDate = document.getElementById("ed-note-date").value;
-  if (noteText && noteDate) { if (!m.notes) m.notes = []; m.notes.push({id: data.nextEntryId++, date: noteDate, text: noteText}); }
+  if (noteText) { if (!m.notes) m.notes = []; m.notes.push({id: data.nextEntryId++, date: today(), text: noteText}); }
   save(); closeModal(); render();
 }
 
@@ -554,12 +541,11 @@ function openAddMeal() {
   var html = '<h3>New Meal</h3><div class="modal-scroll">';
   html += '<div class="field"><label>Meal Name</label><input id="m-name" type="text" class="meal-name-input" placeholder="e.g. Lentil Soup"></div>';
   html += '<div class="field"><label>Cronometer Date</label><input id="m-date" type="date" value="' + today() + '"></div>';
-  html += '<div class="field"><label>Ingredients <span style="font-weight:400;text-transform:none">(type each item and press Enter)</span></label>' + buildTagInputHTML() + '</div>';
+  html += '<div class="field"><label>Ingredients</label>' + buildTagInputHTML() + '</div>';
   html += '<div class="field"><label>Recipe</label><textarea id="m-ins" style="width:100%;font-size:14px;padding:8px;border:1px solid #ccc;border-radius:8px;font-family:inherit;resize:vertical;min-height:44px"></textarea></div>';
   html += '<div class="field"><label>Notes</label>';
   html += '<div style="background:#f8f8f8;border:1px dashed #ccc;border-radius:8px;padding:10px 12px">';
-  html += '<input type="date" id="m-note-date" value="' + today() + '" style="font-size:12px;border:1px solid #ccc;border-radius:6px;padding:3px 6px;margin-bottom:6px">';
-  html += '<textarea id="m-note-text" placeholder="Optional note..." style="width:100%;font-size:13px;padding:6px;border:1px solid #ccc;border-radius:6px;resize:vertical;min-height:44px;font-family:inherit;display:block;margin-top:6px"></textarea>';
+  html += '<textarea id="m-note-text" placeholder="" style="width:100%;font-size:13px;padding:6px;border:1px solid #ccc;border-radius:6px;resize:vertical;min-height:44px;font-family:inherit;display:block;margin-top:6px"></textarea>';
   html += '</div></div>';
   html += '</div>';
   html += '<div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="submitAddMeal()">Add Meal</button></div>';
@@ -584,9 +570,8 @@ function submitAddMeal() {
     notes: []
   };
   var newNoteText = (document.getElementById('m-note-text').value || '').trim();
-  var newNoteDate = document.getElementById('m-note-date').value;
-  if (newNoteText && newNoteDate) {
-    meal.notes.push({id: data.nextEntryId++, date: newNoteDate, text: newNoteText});
+  if (newNoteText) {
+    meal.notes.push({id: data.nextEntryId++, date: today(), text: newNoteText});
   }
   data.meals.push(meal);
   openMeals[meal.id] = !!(meal.ingredients.length || meal.hasRecipe || meal.notes.length);
