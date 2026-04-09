@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Meal Log">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#f5f4f0;color:#1a1a1a;padding:1.5rem;min-height:100vh;text-transform:uppercase}
@@ -43,6 +44,8 @@ body{font-family:system-ui,sans-serif;background:#f5f4f0;color:#1a1a1a;padding:1
 .tag-item{background:#e8e8e8;border-radius:6px;padding:4px 8px;font-size:13px;display:flex;align-items:center;gap:5px;text-transform:uppercase}
 .tag-item button{background:none;border:none;cursor:pointer;font-size:14px;padding:0;line-height:1;color:#555}
 .tag-item button:hover{color:#c00}
+.meal-name-input{font-family:"Lora",Georgia,serif;font-size:15px;text-transform:none}
+.meal-name{font-family:"Lora",Georgia,serif;font-size:20px;font-weight:600;text-transform:none;letter-spacing:0.01em}
 #tag-field{border:none;outline:none;font-size:14px;padding:4px;min-width:160px;flex:1;background:transparent;font-family:inherit;text-transform:uppercase}
 </style>
 </head>
@@ -295,6 +298,7 @@ function render() {
     return m.notes.some(function(n) { return n.text.toLowerCase().indexOf(q) >= 0; });
   });
   if (!filtered.length) { list.innerHTML = '<div class="empty">No meals found.</div>'; return; }
+  filtered.sort(function(a,b){ return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : a.name.toLowerCase() > b.name.toLowerCase() ? 1 : 0; });
 
   var editBtnBlack = 'font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;border:none;background:#1a1a1a;color:#fff;text-transform:uppercase';
   var deleteBtnRed = 'font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;background:#fff;color:#c0392b;border:1px solid #e74c3c;text-transform:uppercase';
@@ -311,7 +315,7 @@ function render() {
     // ── Header row ──────────────────────────────────────────────────────────
     html += '<div style="display:flex;align-items:center;gap:8px;padding:14px 16px;cursor:pointer;user-select:none;flex-wrap:wrap" onclick="toggleMeal(' + m.id + ')">';
     html += '<span style="font-size:14px;color:#1a1a1a;flex-shrink:0">' + (isOpen ? '&#9660;' : '&#9654;') + '</span>';
-    html += '<span style="font-size:18px;font-weight:700;flex:1;color:#1a1a1a;min-width:120px">' + esc(m.name) + '</span>';
+    html += '<span class="meal-name" style="flex:1;color:#1a1a1a;min-width:120px">' + esc(m.name) + '</span>';
 
     html += '<div style="display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap" onclick="event.stopPropagation()">';
     html += '<button style="' + miniStyle + '" onclick="openMealEditor(' + m.id + ')">' + (m.photo ? '&#128444; Photo' : '+ Photo') + '</button>';
@@ -435,7 +439,7 @@ function openMealEditor(id) {
 
   // Name
   html += '<div style="border-bottom:1px solid #eee;padding-bottom:14px;margin-bottom:14px">';
-  html += '<div class="field" style="margin-bottom:0"><label>Meal Name</label><input id="ed-name" type="text" value="' + esc(m.name) + '"></div>';
+  html += '<div class="field" style="margin-bottom:0"><label>Meal Name</label><input id="ed-name" type="text" class="meal-name-input" value="' + esc(m.name) + '"></div>';
   html += '</div>';
 
   // Photo — compact if no photo
@@ -548,10 +552,15 @@ function updateNoteText(mealId, noteId, val) {
 function openAddMeal() {
   currentTags = [];
   var html = '<h3>New Meal</h3><div class="modal-scroll">';
-  html += '<div class="field"><label>Meal Name</label><input id="m-name" type="text" placeholder="e.g. Lentil Soup"></div>';
+  html += '<div class="field"><label>Meal Name</label><input id="m-name" type="text" class="meal-name-input" placeholder="e.g. Lentil Soup"></div>';
   html += '<div class="field"><label>Cronometer Date</label><input id="m-date" type="date" value="' + today() + '"></div>';
   html += '<div class="field"><label>Ingredients <span style="font-weight:400;text-transform:none">(type each item and press Enter)</span></label>' + buildTagInputHTML() + '</div>';
   html += '<div class="field"><label>Recipe</label><textarea id="m-ins" style="width:100%;font-size:14px;padding:8px;border:1px solid #ccc;border-radius:8px;font-family:inherit;resize:vertical;min-height:44px"></textarea></div>';
+  html += '<div class="field"><label>Notes</label>';
+  html += '<div style="background:#f8f8f8;border:1px dashed #ccc;border-radius:8px;padding:10px 12px">';
+  html += '<input type="date" id="m-note-date" value="' + today() + '" style="font-size:12px;border:1px solid #ccc;border-radius:6px;padding:3px 6px;margin-bottom:6px">';
+  html += '<textarea id="m-note-text" placeholder="Optional note..." style="width:100%;font-size:13px;padding:6px;border:1px solid #ccc;border-radius:6px;resize:vertical;min-height:44px;font-family:inherit;display:block;margin-top:6px"></textarea>';
+  html += '</div></div>';
   html += '</div>';
   html += '<div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="submitAddMeal()">Add Meal</button></div>';
   openModal(html, 'm-name');
@@ -574,8 +583,13 @@ function submitAddMeal() {
     ingredients: currentTags.slice(),
     notes: []
   };
+  var newNoteText = (document.getElementById('m-note-text').value || '').trim();
+  var newNoteDate = document.getElementById('m-note-date').value;
+  if (newNoteText && newNoteDate) {
+    meal.notes.push({id: data.nextEntryId++, date: newNoteDate, text: newNoteText});
+  }
   data.meals.push(meal);
-  openMeals[meal.id] = !!(meal.ingredients.length || meal.hasRecipe);
+  openMeals[meal.id] = !!(meal.ingredients.length || meal.hasRecipe || meal.notes.length);
   saveOpenState();
   save(); closeModal(); render();
 }
