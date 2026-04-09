@@ -101,8 +101,9 @@ function importBackup(input) {
         if (!m.photo) m.photo = '';
         if (!m.entries) m.entries = [];
       });
-      openMeals = {};
-      data.meals.forEach(function(m) { openMeals[m.id] = true; });
+      data.meals.forEach(function(m) {
+        if (openMeals[m.id] === undefined) openMeals[m.id] = false;
+      });
       save(); render();
       alert('Backup imported successfully!');
     } catch(err) { alert('Could not read file. Make sure it is a valid meal log backup JSON file.'); }
