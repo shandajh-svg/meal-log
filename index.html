@@ -52,9 +52,12 @@ body{font-family:system-ui,sans-serif;background:#f5f4f0;color:#1a1a1a;padding:1
   <span id="sync-status" style="font-size:11px;font-weight:600;font-family:monospace;"></span>
 </div>
 <div id="meal-list"></div>
+
+<!-- Modal: clicking the dark backdrop closes it, but only via mousedown tracking so text selection inside doesn't trigger it -->
 <div class="modal-bg" id="modal-bg">
   <div class="modal" id="modal-inner"></div>
 </div>
+
 <script>
 var STORAGE_KEY = 'meal_log_v1';
 
@@ -154,11 +157,9 @@ data.meals.forEach(function(m) {
   if (!m.entries) m.entries = [];
 });
 
-// openMeals tracks collapsed state - NOT synced, stays local per device
 var openMeals = {};
 data.meals.forEach(function(m) { openMeals[m.id] = false; });
 
-// Load saved open/close state from localStorage separately
 try {
   var savedOpen = localStorage.getItem('meal_log_open_state');
   if (savedOpen) openMeals = JSON.parse(savedOpen);
@@ -200,30 +201,44 @@ function render() {
     var matchIngr = q && m.name.toLowerCase().indexOf(q) < 0;
     var btnStyle = 'font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;border:none;background:' + pal.text + ';color:#fff;text-transform:uppercase';
     var delStyle = 'font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;border:none;background:#8b1a1a;color:#fff;text-transform:uppercase';
+    // small outline style for the quick-action mini buttons in the header
+    var miniStyle = 'font-size:11px;font-weight:700;padding:4px 9px;border-radius:7px;cursor:pointer;border:1px solid rgba(0,0,0,0.25);background:rgba(255,255,255,0.5);color:' + pal.text + ';text-transform:uppercase;white-space:nowrap';
 
     html += '<div class="meal-card" style="background:' + pal.bg + ';border:1px solid ' + pal.border + ';border-radius:12px;overflow:hidden">';
-    html += '<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;user-select:none" onclick="toggleMeal(' + m.id + ')">';
+
+    // ── Header row ──────────────────────────────────────────────────────────
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:14px 16px;cursor:pointer;user-select:none;flex-wrap:wrap" onclick="toggleMeal(' + m.id + ')">';
     html += '<span style="font-size:14px;color:' + pal.text + ';flex-shrink:0">' + (isOpen ? '&#9660;' : '&#9654;') + '</span>';
-    html += '<span style="font-size:18px;font-weight:700;flex:1;color:' + pal.text + '">' + esc(m.name) + '</span>';
-    if (!m.photo) {
-      html += '<div onclick="event.stopPropagation();openPhotoModal(' + m.id + ')" style="font-size:12px;font-weight:600;padding:5px 10px;border-radius:8px;cursor:pointer;border:1px dashed rgba(0,0,0,0.3);background:rgba(255,255,255,0.4);color:' + pal.text + ';flex-shrink:0">+ PHOTO</div>';
+    html += '<span style="font-size:18px;font-weight:700;flex:1;color:' + pal.text + ';min-width:120px">' + esc(m.name) + '</span>';
+
+    // Quick-action mini buttons: + Photo / + Recipe / + Note — always shown in header
+    html += '<div style="display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap" onclick="event.stopPropagation()">';
+    html += '<button style="' + miniStyle + '" onclick="openPhotoModal(' + m.id + ')">' + (m.photo ? '&#128444; Photo' : '+ Photo') + '</button>';
+    if (!m.hasRecipe) {
+      html += '<button style="' + miniStyle + '" onclick="addRecipe(' + m.id + ')">+ Recipe</button>';
     }
+    html += '<button style="' + miniStyle + '" onclick="openAddNote(' + m.id + ');if(!openMeals[' + m.id + ']){openMeals[' + m.id + ']=true;saveOpenState();}">+ Note</button>';
+    html += '</div>';
+
+    // Rename / Delete
     html += '<div style="display:flex;gap:6px;flex-shrink:0" onclick="event.stopPropagation()">';
     html += '<button style="' + btnStyle + '" onclick="openRenameMeal(' + m.id + ')">RENAME</button>';
     html += '<button style="' + delStyle + '" onclick="deleteMeal(' + m.id + ')">DELETE</button>';
-    html += '</div></div>';
+    html += '</div>';
+    html += '</div>'; // end header row
 
+    // ── Expanded body ────────────────────────────────────────────────────────
     if (isOpen) {
       html += '<div class="meal-inner" style="border-top:1px solid rgba(0,0,0,0.1)">';
 
+      // Photo display (only if photo exists — no redundant add-photo button here)
       if (m.photo) {
         html += '<div style="position:relative;margin-bottom:14px;background:#f0f0ec;border-radius:10px;overflow:hidden;text-align:center">';
         html += '<img src="' + esc(m.photo) + '" style="max-width:100%;max-height:300px;object-fit:contain;display:block;margin:0 auto">';
         html += '<button onclick="openPhotoModal(' + m.id + ')" style="position:absolute;bottom:10px;right:10px;font-size:12px;padding:4px 10px;border-radius:8px;background:rgba(0,0,0,0.5);color:#fff;border:none;cursor:pointer;text-transform:uppercase">CHANGE PHOTO</button></div>';
-      } else {
-        html += '<button onclick="openPhotoModal(' + m.id + ')" style="font-size:13px;font-weight:600;padding:8px 12px;border-radius:8px;cursor:pointer;border:1px dashed rgba(0,0,0,0.2);background:transparent;color:' + pal.text + ';width:100%;margin-bottom:14px;text-transform:uppercase">+ ADD A PHOTO</button>';
       }
 
+      // Recipe section
       if (m.hasRecipe) {
         html += '<div style="background:rgba(255,255,255,0.55);border-radius:8px;padding:12px 14px;margin-bottom:14px;border:1px solid rgba(0,0,0,0.1)">';
         html += '<div style="font-size:12px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;color:' + pal.text + '">';
@@ -237,10 +252,9 @@ function render() {
           html += '<div style="font-size:13px;opacity:0.6;color:' + pal.text + '">No recipe yet. Click Edit to add one.</div>';
         }
         html += '</div>';
-      } else {
-        html += '<button onclick="addRecipe(' + m.id + ')" style="font-size:13px;font-weight:700;padding:8px 12px;border-radius:8px;cursor:pointer;border:1px dashed rgba(0,0,0,0.2);background:transparent;color:' + pal.text + ';width:100%;margin-bottom:14px;text-transform:uppercase">+ ADD RECIPE</button>';
       }
 
+      // Notes
       html += '<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:' + pal.text + ';opacity:0.7">NOTES</div>';
       var sortedEntries = m.entries.slice().sort(function(a,b) { return b.date > a.date ? 1 : -1; });
       sortedEntries.forEach(function(e) {
@@ -259,6 +273,7 @@ function render() {
         });
         html += '</div></div>';
       });
+
       html += '<button onclick="openAddNote(' + m.id + ')" style="font-size:13px;font-weight:700;padding:8px 12px;border-radius:8px;cursor:pointer;border:none;background:' + pal.text + ';color:#fff;width:100%;margin-top:8px;text-transform:uppercase">+ ADD NOTE</button>';
       html += '</div>';
     }
@@ -283,14 +298,29 @@ function deleteRecipe(id) {
 function addRecipe(id) {
   var m = data.meals.find(function(x) { return x.id === id; });
   m.hasRecipe = true;
+  // Ensure the card is open so user sees the result
+  openMeals[id] = true;
+  saveOpenState();
   save(); render();
   openEditRecipe(id);
 }
 
+// ── Modal open/close ─────────────────────────────────────────────────────────
+// Fix: track mousedown origin so that selecting text inside the modal and
+// releasing the mouse over the backdrop does NOT close the modal.
+var _mousedownOnBackdrop = false;
+
+document.getElementById('modal-bg').addEventListener('mousedown', function(e) {
+  _mousedownOnBackdrop = (e.target === this);
+});
+
+document.getElementById('modal-bg').addEventListener('mouseup', function(e) {
+  if (_mousedownOnBackdrop && e.target === this) closeModal();
+  _mousedownOnBackdrop = false;
+});
+
 function closeModal() { document.getElementById('modal-bg').classList.remove('open'); }
 function openModal(html) { document.getElementById('modal-inner').innerHTML = html; document.getElementById('modal-bg').classList.add('open'); }
-
-document.getElementById('modal-bg').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 
 function openPhotoModal(id) {
   var m = data.meals.find(function(x) { return x.id === id; });
@@ -472,7 +502,6 @@ function pullFromGoogle() {
         if (!m.entries) m.entries = [];
         m.photo = existingPhotos[m.id] || "";
       });
-      // Do NOT overwrite openMeals - keep local collapsed state
       data.meals.forEach(function(m) {
         if (openMeals[m.id] === undefined) openMeals[m.id] = false;
       });
