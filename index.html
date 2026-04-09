@@ -35,6 +35,12 @@ body{font-family:system-ui,sans-serif;background:#f5f4f0;color:#1a1a1a;padding:1
 .empty{font-size:14px;color:#888;text-align:center;padding:2rem 0}
 .meal-card{max-width:780px;margin:0 auto 10px auto}
 .meal-inner{padding:14px 16px}
+/* ingredient tag input */
+.tag-input-wrapper{border:1px solid #ccc;border-radius:8px;padding:6px 8px;background:#fff;min-height:80px;cursor:text;display:flex;flex-wrap:wrap;gap:5px;align-items:flex-start}
+.tag-item{background:#e8e8e8;border-radius:6px;padding:4px 8px;font-size:13px;display:flex;align-items:center;gap:5px;text-transform:uppercase}
+.tag-item button{background:none;border:none;cursor:pointer;font-size:14px;padding:0;line-height:1;color:#555}
+.tag-item button:hover{color:#c00}
+#tag-field{border:none;outline:none;font-size:14px;padding:4px;min-width:160px;flex:1;background:transparent;font-family:inherit;text-transform:uppercase}
 </style>
 </head>
 <body>
@@ -53,7 +59,6 @@ body{font-family:system-ui,sans-serif;background:#f5f4f0;color:#1a1a1a;padding:1
 </div>
 <div id="meal-list"></div>
 
-<!-- Modal: clicking the dark backdrop closes it, but only via mousedown tracking so text selection inside doesn't trigger it -->
 <div class="modal-bg" id="modal-bg">
   <div class="modal" id="modal-inner"></div>
 </div>
@@ -61,6 +66,70 @@ body{font-family:system-ui,sans-serif;background:#f5f4f0;color:#1a1a1a;padding:1
 <script>
 var STORAGE_KEY = 'meal_log_v1';
 
+// ── tag input helpers ────────────────────────────────────────────────────────
+// currentTags holds the working list while a modal is open
+var currentTags = [];
+
+function renderTags() {
+  var wrapper = document.getElementById('tag-input-wrapper');
+  if (!wrapper) return;
+  // remove old tag elements but keep the input field
+  var input = document.getElementById('tag-field');
+  wrapper.innerHTML = '';
+  currentTags.forEach(function(tag, i) {
+    var span = document.createElement('span');
+    span.className = 'tag-item';
+    span.innerHTML = esc(tag) + '<button type="button" onclick="removeTag(' + i + ')" title="Remove">&#x2715;</button>';
+    wrapper.appendChild(span);
+  });
+  wrapper.appendChild(input);
+  input.focus();
+}
+
+function removeTag(i) {
+  currentTags.splice(i, 1);
+  renderTags();
+}
+
+function addTagFromInput() {
+  var input = document.getElementById('tag-field');
+  var val = input.value.trim();
+  if (val) {
+    currentTags.push(val);
+    input.value = '';
+    renderTags();
+  }
+}
+
+function tagKeydown(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    addTagFromInput();
+  } else if (e.key === 'Backspace') {
+    var input = document.getElementById('tag-field');
+    if (input.value === '' && currentTags.length > 0) {
+      currentTags.pop();
+      renderTags();
+    }
+  }
+}
+
+function buildTagInputHTML() {
+  return '<div class="tag-input-wrapper" id="tag-input-wrapper" onclick="document.getElementById(\'tag-field\').focus()">' +
+    '<input type="text" id="tag-field" placeholder="Type and press Enter..." onkeydown="tagKeydown(event)" onblur="addTagFromInput()">' +
+    '</div>';
+}
+
+function tagsToString(tags) {
+  return tags.join(', ');
+}
+
+function stringToTags(str) {
+  if (!str) return [];
+  return str.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+}
+
+// ── data layer ───────────────────────────────────────────────────────────────
 function loadData() {
   try { var s = localStorage.getItem(STORAGE_KEY); if (s) return JSON.parse(s); } catch(e) {}
   return null;
@@ -103,6 +172,8 @@ function importBackup(input) {
         if (m.hasRecipe === undefined) m.hasRecipe = !!m.instructions;
         if (!m.photo) m.photo = '';
         if (!m.entries) m.entries = [];
+        if (!m.ingredients) m.ingredients = [];
+        if (!m.notes) m.notes = [];
       });
       data.meals.forEach(function(m) {
         if (openMeals[m.id] === undefined) openMeals[m.id] = false;
@@ -145,16 +216,52 @@ var PALETTES = [
 
 function getPalette(idx) { return PALETTES[idx % PALETTES.length]; }
 
-var SEED = {"meals":[{"id":1,"name":"Chicken noodle soup","hasRecipe":true,"instructions":"shred chicken: Put 2 large breasts in pot and add water to cover by 1/4\". Add 2 tsp salt. Once it reaches simmer on med heat, turn heat off and quickly cover with lid & let sit 15 minutes. remove from liquid and let sit another 10-20 minutes.\n\n24 oz package Reames Egg Noodles = (14) 48g servings. Take 48g noodles & add to pot with 1 serving bone broth, 200 mL water, 1 carrot, 1 rib celery, 25g yellow onion, 2 cups water & 1 1/4 tsp better than bouillon roasted chicken base reduced sodium. simmer for 15 minutes. add 100g shredded chicken & scallions at the end.\n","photo":"","entries":[{"id":1,"date":"2026-03-25","ingredients":"60g kefir, 1 egg, 3 mandarins, 1/4 tsp nosalt"}]},{"id":2,"name":"Thin crust pizza","hasRecipe":false,"instructions":"","photo":"","entries":[{"id":4,"date":"2026-04-01","ingredients":"1/4+1/8 tsp nosalt, 60ml kefir, 3 mandarins, 1 egg"}]}],"nextMealId":6,"nextEntryId":6};
+// SEED data updated: entries renamed to ingredients (array of tags), notes separate
+var SEED = {"meals":[
+  {"id":1,"name":"Chicken noodle soup","hasRecipe":true,"instructions":"shred chicken: Put 2 large breasts in pot and add water to cover by 1/4\". Add 2 tsp salt. Once it reaches simmer on med heat, turn heat off and quickly cover with lid & let sit 15 minutes. remove from liquid and let sit another 10-20 minutes.\n\n24 oz package Reames Egg Noodles = (14) 48g servings. Take 48g noodles & add to pot with 1 serving bone broth, 200 mL water, 1 carrot, 1 rib celery, 25g yellow onion, 2 cups water & 1 1/4 tsp better than bouillon roasted chicken base reduced sodium. simmer for 15 minutes. add 100g shredded chicken & scallions at the end.\n","photo":"",
+   "cronDate":"2026-03-25",
+   "ingredients":["60g kefir","1 egg","3 mandarins","1/4 tsp nosalt"],
+   "notes":[]},
+  {"id":2,"name":"Thin crust pizza","hasRecipe":false,"instructions":"","photo":"",
+   "cronDate":"2026-04-01",
+   "ingredients":["1/4+1/8 tsp nosalt","60ml kefir","3 mandarins","1 egg"],
+   "notes":[]}
+],"nextMealId":6,"nextEntryId":6};
 
 var stored = loadData();
-var data = stored || SEED;
 
+// Migrate old format if needed
+if (stored) {
+  stored.meals.forEach(function(m) {
+    if (!m.instructions) m.instructions = '';
+    if (m.hasRecipe === undefined) m.hasRecipe = !!m.instructions;
+    if (!m.photo) m.photo = '';
+    // migrate old entries -> ingredients
+    if (!m.ingredients) {
+      if (m.entries && m.entries.length > 0) {
+        // use last entry's ingredients as the ingredient list
+        var last = m.entries[m.entries.length - 1];
+        m.cronDate = last.date;
+        m.ingredients = stringToTags(last.ingredients);
+      } else {
+        m.ingredients = [];
+      }
+    }
+    if (!m.notes) m.notes = [];
+    if (!m.cronDate) m.cronDate = '';
+    // remove old entries array
+    delete m.entries;
+  });
+}
+
+var data = stored || SEED;
 data.meals.forEach(function(m) {
   if (!m.instructions) m.instructions = '';
   if (m.hasRecipe === undefined) m.hasRecipe = !!m.instructions;
   if (!m.photo) m.photo = '';
-  if (!m.entries) m.entries = [];
+  if (!m.ingredients) m.ingredients = [];
+  if (!m.notes) m.notes = [];
+  if (!m.cronDate) m.cronDate = '';
 });
 
 var openMeals = {};
@@ -190,18 +297,21 @@ function render() {
     if (!q) return true;
     if (m.name.toLowerCase().indexOf(q) >= 0) return true;
     if (m.instructions && m.instructions.toLowerCase().indexOf(q) >= 0) return true;
-    return m.entries.some(function(e) { return e.ingredients.toLowerCase().indexOf(q) >= 0; });
+    if (m.ingredients.some(function(ing) { return ing.toLowerCase().indexOf(q) >= 0; })) return true;
+    return m.notes.some(function(n) { return n.text.toLowerCase().indexOf(q) >= 0; });
   });
   if (!filtered.length) { list.innerHTML = '<div class="empty">No meals found.</div>'; return; }
+
+  // button style constants
+  var delBtnStyle = 'font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;border:none;background:#ff006b;color:#fff;text-transform:uppercase';
+  var renameBtnStyle = 'font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;border:none;background:#666666;color:#fff;text-transform:uppercase';
+  var editBtnStyle = 'font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;border:none;background:#666666;color:#fff;text-transform:uppercase';
 
   var html = '';
   filtered.forEach(function(m, i) {
     var pal = getPalette(i);
     var isOpen = openMeals[m.id];
     var matchIngr = q && m.name.toLowerCase().indexOf(q) < 0;
-    var btnStyle = 'font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;border:none;background:' + pal.text + ';color:#fff;text-transform:uppercase';
-    var delStyle = 'font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;border:none;background:#8b1a1a;color:#fff;text-transform:uppercase';
-    // small outline style for the quick-action mini buttons in the header
     var miniStyle = 'font-size:11px;font-weight:700;padding:4px 9px;border-radius:7px;cursor:pointer;border:1px solid rgba(0,0,0,0.25);background:rgba(255,255,255,0.5);color:' + pal.text + ';text-transform:uppercase;white-space:nowrap';
 
     html += '<div class="meal-card" style="background:' + pal.bg + ';border:1px solid ' + pal.border + ';border-radius:12px;overflow:hidden">';
@@ -211,19 +321,20 @@ function render() {
     html += '<span style="font-size:14px;color:' + pal.text + ';flex-shrink:0">' + (isOpen ? '&#9660;' : '&#9654;') + '</span>';
     html += '<span style="font-size:18px;font-weight:700;flex:1;color:' + pal.text + ';min-width:120px">' + esc(m.name) + '</span>';
 
-    // Quick-action mini buttons: + Photo / + Recipe / + Note — always shown in header
+    // 4 quick-action mini buttons: + Photo / + Recipe / + Ingredients / + Note
     html += '<div style="display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap" onclick="event.stopPropagation()">';
     html += '<button style="' + miniStyle + '" onclick="openPhotoModal(' + m.id + ')">' + (m.photo ? '&#128444; Photo' : '+ Photo') + '</button>';
     if (!m.hasRecipe) {
       html += '<button style="' + miniStyle + '" onclick="addRecipe(' + m.id + ')">+ Recipe</button>';
     }
+    html += '<button style="' + miniStyle + '" onclick="openEditIngredients(' + m.id + ')">+ Ingredients</button>';
     html += '<button style="' + miniStyle + '" onclick="openAddNote(' + m.id + ');if(!openMeals[' + m.id + ']){openMeals[' + m.id + ']=true;saveOpenState();}">+ Note</button>';
     html += '</div>';
 
     // Rename / Delete
     html += '<div style="display:flex;gap:6px;flex-shrink:0" onclick="event.stopPropagation()">';
-    html += '<button style="' + btnStyle + '" onclick="openRenameMeal(' + m.id + ')">RENAME</button>';
-    html += '<button style="' + delStyle + '" onclick="deleteMeal(' + m.id + ')">DELETE</button>';
+    html += '<button style="' + renameBtnStyle + '" onclick="openRenameMeal(' + m.id + ')">RENAME</button>';
+    html += '<button style="' + delBtnStyle + '" onclick="deleteMeal(' + m.id + ')">DELETE</button>';
     html += '</div>';
     html += '</div>'; // end header row
 
@@ -231,20 +342,38 @@ function render() {
     if (isOpen) {
       html += '<div class="meal-inner" style="border-top:1px solid rgba(0,0,0,0.1)">';
 
-      // Photo display (only if photo exists — no redundant add-photo button here)
+      // Photo display
       if (m.photo) {
         html += '<div style="position:relative;margin-bottom:14px;background:#f0f0ec;border-radius:10px;overflow:hidden;text-align:center">';
         html += '<img src="' + esc(m.photo) + '" style="max-width:100%;max-height:300px;object-fit:contain;display:block;margin:0 auto">';
         html += '<button onclick="openPhotoModal(' + m.id + ')" style="position:absolute;bottom:10px;right:10px;font-size:12px;padding:4px 10px;border-radius:8px;background:rgba(0,0,0,0.5);color:#fff;border:none;cursor:pointer;text-transform:uppercase">CHANGE PHOTO</button></div>';
       }
 
-      // Recipe section
+      // ── Ingredients section ──────────────────────────────────────────────
+      if (m.ingredients && m.ingredients.length > 0) {
+        html += '<div style="background:rgba(255,255,255,0.55);border-radius:8px;padding:12px 14px;margin-bottom:14px;border:1px solid rgba(0,0,0,0.1)">';
+        html += '<div style="font-size:12px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;color:' + pal.text + '">';
+        html += '<span>INGREDIENTS</span>';
+        html += '<div style="display:flex;gap:6px">';
+        if (m.cronDate) html += '<span style="font-size:11px;font-weight:600;opacity:0.65;align-self:center">CRONOMETER: ' + fmtDate(m.cronDate) + '</span>';
+        html += '<button style="' + editBtnStyle + '" onclick="openEditIngredients(' + m.id + ')">EDIT</button>';
+        html += '<button style="' + delBtnStyle + '" onclick="deleteIngredients(' + m.id + ')">DELETE</button>';
+        html += '</div></div>';
+        html += '<div style="display:flex;flex-wrap:wrap;gap:7px">';
+        m.ingredients.forEach(function(ing) {
+          var hi = q && ing.toLowerCase().indexOf(q) >= 0 && matchIngr;
+          html += '<span style="font-size:13px;background:' + (hi?'#fff':'rgba(255,255,255,0.7)') + ';border:1px solid ' + (hi?'#2563eb':'rgba(0,0,0,0.15)') + ';border-radius:8px;padding:4px 10px;color:' + (hi?'#1e3a8a':pal.text) + ';text-transform:uppercase">' + esc(ing) + '</span>';
+        });
+        html += '</div></div>';
+      }
+
+      // ── Recipe section ───────────────────────────────────────────────────
       if (m.hasRecipe) {
         html += '<div style="background:rgba(255,255,255,0.55);border-radius:8px;padding:12px 14px;margin-bottom:14px;border:1px solid rgba(0,0,0,0.1)">';
         html += '<div style="font-size:12px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;color:' + pal.text + '">';
         html += '<span>RECIPE</span><div style="display:flex;gap:6px">';
-        html += '<button style="' + btnStyle + '" onclick="openEditRecipe(' + m.id + ')">EDIT</button>';
-        html += '<button style="' + delStyle + '" onclick="deleteRecipe(' + m.id + ')">DELETE RECIPE</button>';
+        html += '<button style="' + editBtnStyle + '" onclick="openEditRecipe(' + m.id + ')">EDIT</button>';
+        html += '<button style="' + delBtnStyle + '" onclick="deleteRecipe(' + m.id + ')">DELETE RECIPE</button>';
         html += '</div></div>';
         if (m.instructions) {
           html += '<div style="font-size:14px;line-height:1.6;white-space:pre-wrap;color:' + pal.text + '">' + esc(m.instructions) + '</div>';
@@ -254,28 +383,24 @@ function render() {
         html += '</div>';
       }
 
-      // Notes
-      html += '<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:' + pal.text + ';opacity:0.7">NOTES</div>';
-      var sortedEntries = m.entries.slice().sort(function(a,b) { return b.date > a.date ? 1 : -1; });
-      sortedEntries.forEach(function(e) {
-        var ingrs = e.ingredients.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
-        html += '<div style="background:rgba(255,255,255,0.55);border-radius:8px;padding:12px 14px;margin-bottom:10px;border:1px solid rgba(0,0,0,0.1)">';
-        html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">';
-        html += '<span style="font-size:14px;font-weight:700;flex:1;color:' + pal.text + '">' + fmtDate(e.date) + '</span>';
-        html += '<div style="display:flex;gap:6px">';
-        html += '<button style="' + btnStyle + '" onclick="openEditNote(' + m.id + ',' + e.id + ')">EDIT</button>';
-        html += '<button style="' + delStyle + '" onclick="deleteNote(' + m.id + ',' + e.id + ')">DELETE</button>';
-        html += '</div></div>';
-        html += '<div style="display:flex;flex-wrap:wrap;gap:7px">';
-        ingrs.forEach(function(ing) {
-          var hi = q && ing.toLowerCase().indexOf(q) >= 0 && matchIngr;
-          html += '<span style="font-size:13px;background:' + (hi?'#fff':'rgba(255,255,255,0.7)') + ';border:1px solid ' + (hi?'#2563eb':'rgba(0,0,0,0.15)') + ';border-radius:8px;padding:4px 10px;color:' + (hi?'#1e3a8a':pal.text) + ';text-transform:uppercase">' + esc(ing) + '</span>';
+      // ── Notes section ────────────────────────────────────────────────────
+      if (m.notes && m.notes.length > 0) {
+        html += '<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:' + pal.text + ';opacity:0.7">NOTES</div>';
+        var sortedNotes = m.notes.slice().sort(function(a,b) { return b.date > a.date ? 1 : -1; });
+        sortedNotes.forEach(function(n) {
+          html += '<div style="background:rgba(255,255,255,0.55);border-radius:8px;padding:12px 14px;margin-bottom:10px;border:1px solid rgba(0,0,0,0.1)">';
+          html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">';
+          html += '<span style="font-size:14px;font-weight:700;flex:1;color:' + pal.text + '">' + fmtDate(n.date) + '</span>';
+          html += '<div style="display:flex;gap:6px">';
+          html += '<button style="' + editBtnStyle + '" onclick="openEditNote(' + m.id + ',' + n.id + ')">EDIT</button>';
+          html += '<button style="' + delBtnStyle + '" onclick="deleteNote(' + m.id + ',' + n.id + ')">DELETE</button>';
+          html += '</div></div>';
+          html += '<div style="font-size:14px;line-height:1.6;white-space:pre-wrap;color:' + pal.text + '">' + esc(n.text) + '</div>';
+          html += '</div>';
         });
-        html += '</div></div>';
-      });
+      }
 
-      html += '<button onclick="openAddNote(' + m.id + ')" style="font-size:13px;font-weight:700;padding:8px 12px;border-radius:8px;cursor:pointer;border:none;background:' + pal.text + ';color:#fff;width:100%;margin-top:8px;text-transform:uppercase">+ ADD NOTE</button>';
-      html += '</div>';
+      html += '</div>'; // end meal-inner
     }
     html += '</div>';
   });
@@ -298,7 +423,6 @@ function deleteRecipe(id) {
 function addRecipe(id) {
   var m = data.meals.find(function(x) { return x.id === id; });
   m.hasRecipe = true;
-  // Ensure the card is open so user sees the result
   openMeals[id] = true;
   saveOpenState();
   save(); render();
@@ -306,8 +430,6 @@ function addRecipe(id) {
 }
 
 // ── Modal open/close ─────────────────────────────────────────────────────────
-// Fix: track mousedown origin so that selecting text inside the modal and
-// releasing the mouse over the backdrop does NOT close the modal.
 var _mousedownOnBackdrop = false;
 
 document.getElementById('modal-bg').addEventListener('mousedown', function(e) {
@@ -335,7 +457,7 @@ function openPhotoModal(id) {
   }
   html += '<div class="modal-actions" style="margin-top:12px">';
   if (m.photo) {
-    html += '<button style="font-size:12px;padding:5px 12px;border-radius:8px;background:#8b1a1a;color:#fff;cursor:pointer;border:none;margin-right:auto;text-transform:uppercase" onclick="removePhoto(' + id + ')">REMOVE PHOTO</button>';
+    html += '<button style="font-size:12px;padding:5px 12px;border-radius:8px;background:#ff006b;color:#fff;cursor:pointer;border:none;margin-right:auto;text-transform:uppercase" onclick="removePhoto(' + id + ')">REMOVE PHOTO</button>';
   }
   html += '<button class="btn-cancel" onclick="closeModal()">Cancel</button></div>';
   openModal(html);
@@ -368,27 +490,67 @@ function submitEditRecipe(id) {
   save(); closeModal(); render();
 }
 
+// ── Ingredients modal ────────────────────────────────────────────────────────
+function openEditIngredients(id) {
+  var m = data.meals.find(function(x) { return x.id === id; });
+  currentTags = (m.ingredients || []).slice();
+  var html = '<h3>Ingredients</h3><p class="modal-sub">' + esc(m.name) + '</p>';
+  html += '<div class="field"><label>Cronometer Date</label><input id="cron-date" type="date" value="' + (m.cronDate || '') + '"></div>';
+  html += '<div class="field"><label>Ingredients <span style="font-weight:400;text-transform:none">(type each item and press Enter)</span></label>' + buildTagInputHTML() + '</div>';
+  html += '<div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="submitEditIngredients(' + id + ')">Save</button></div>';
+  openModal(html);
+  renderTags();
+}
+
+function deleteIngredients(id) {
+  if (!confirm('Delete all ingredients for this meal?')) return;
+  var m = data.meals.find(function(x) { return x.id === id; });
+  m.ingredients = [];
+  m.cronDate = '';
+  save(); render();
+}
+
+function submitEditIngredients(id) {
+  addTagFromInput(); // flush any pending text in the field
+  var date = document.getElementById('cron-date').value;
+  var m = data.meals.find(function(x) { return x.id === id; });
+  m.cronDate = date;
+  m.ingredients = currentTags.slice();
+  save(); closeModal(); render();
+}
+
+// ── Add Meal modal ───────────────────────────────────────────────────────────
 function openAddMeal() {
+  currentTags = [];
   var html = '<h3>New Meal</h3>';
   html += '<div class="field"><label>Meal Name</label><input id="m-name" type="text" placeholder="e.g. Lentil Soup"></div>';
-  html += '<div class="field"><label>Date (First Note)</label><input id="m-date" type="date" value="' + today() + '"></div>';
-  html += '<div class="field"><label>Ingredients (comma-separated)</label><textarea id="m-ingr"></textarea></div>';
-  html += '<div class="field"><label>Recipe (optional)</label><textarea id="m-ins" class="tall"></textarea></div>';
+  html += '<div class="field"><label>Cronometer Date</label><input id="m-date" type="date" value="' + today() + '"></div>';
+  html += '<div class="field"><label>Ingredients <span style="font-weight:400;text-transform:none">(type each item and press Enter)</span></label>' + buildTagInputHTML() + '</div>';
+  html += '<div class="field"><label>Recipe</label><textarea id="m-ins" class="tall"></textarea></div>';
   html += '<div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="submitAddMeal()">Add Meal</button></div>';
   openModal(html);
+  renderTags();
 }
 
 function submitAddMeal() {
+  addTagFromInput();
   var name = document.getElementById('m-name').value.trim();
   var date = document.getElementById('m-date').value;
-  var ingr = document.getElementById('m-ingr').value.trim();
   var ins = document.getElementById('m-ins').value;
   if (!name) { alert('Please enter a meal name.'); return; }
-  if (!date) { alert('Please enter a date.'); return; }
-  var meal = {id: data.nextMealId++, name: name, instructions: ins, hasRecipe: !!ins, photo: '', entries: []};
-  if (ingr) meal.entries.push({id: data.nextEntryId++, date: date, ingredients: ingr});
+  var meal = {
+    id: data.nextMealId++,
+    name: name,
+    instructions: ins,
+    hasRecipe: !!ins,
+    photo: '',
+    cronDate: date,
+    ingredients: currentTags.slice(),
+    notes: []
+  };
   data.meals.push(meal);
-  openMeals[meal.id] = true;
+  // only auto-open if something was added
+  openMeals[meal.id] = !!(meal.ingredients.length || meal.hasRecipe);
   saveOpenState();
   save(); closeModal(); render();
 }
@@ -410,55 +572,60 @@ function submitRenameMeal(id) {
 
 function deleteMeal(id) {
   var m = data.meals.find(function(x) { return x.id === id; });
-  if (!confirm('Delete ' + m.name + ' and all its notes?')) return;
+  if (!confirm('Delete ' + m.name + ' and all its data?')) return;
   data.meals = data.meals.filter(function(x) { return x.id !== id; });
   delete openMeals[id];
   saveOpenState();
   save(); render();
 }
 
+// ── Notes (text notes, separate from ingredients) ────────────────────────────
 function openAddNote(mealId) {
   var html = '<h3>New Note</h3>';
-  html += '<div class="field"><label>Date</label><input id="e-date" type="date" value="' + today() + '"></div>';
-  html += '<div class="field"><label>Ingredients (comma-separated)</label><textarea id="e-ingr"></textarea></div>';
+  html += '<div class="field"><label>Date</label><input id="n-date" type="date" value="' + today() + '"></div>';
+  html += '<div class="field"><label>Note</label><textarea id="n-text" placeholder="e.g. add to 300 ml water"></textarea></div>';
   html += '<div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="submitAddNote(' + mealId + ')">Add Note</button></div>';
   openModal(html);
 }
 
 function submitAddNote(mealId) {
-  var date = document.getElementById('e-date').value;
-  var ingr = document.getElementById('e-ingr').value.trim();
+  var date = document.getElementById('n-date').value;
+  var text = document.getElementById('n-text').value.trim();
   if (!date) { alert('Please enter a date.'); return; }
-  if (!ingr) { alert('Please enter ingredients.'); return; }
-  data.meals.find(function(x) { return x.id === mealId; }).entries.push({id: data.nextEntryId++, date: date, ingredients: ingr});
+  if (!text) { alert('Please enter a note.'); return; }
+  var m = data.meals.find(function(x) { return x.id === mealId; });
+  if (!m.notes) m.notes = [];
+  m.notes.push({id: data.nextEntryId++, date: date, text: text});
+  openMeals[mealId] = true;
+  saveOpenState();
   save(); closeModal(); render();
 }
 
-function openEditNote(mealId, entryId) {
+function openEditNote(mealId, noteId) {
   var m = data.meals.find(function(x) { return x.id === mealId; });
-  var e = m.entries.find(function(x) { return x.id === entryId; });
+  var n = m.notes.find(function(x) { return x.id === noteId; });
   var html = '<h3>Edit Note</h3>';
-  html += '<div class="field"><label>Date</label><input id="ed-date" type="date" value="' + e.date + '"></div>';
-  html += '<div class="field"><label>Ingredients (comma-separated)</label><textarea id="ed-ingr">' + esc(e.ingredients) + '</textarea></div>';
-  html += '<div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="submitEditNote(' + mealId + ',' + entryId + ')">Save</button></div>';
+  html += '<div class="field"><label>Date</label><input id="en-date" type="date" value="' + n.date + '"></div>';
+  html += '<div class="field"><label>Note</label><textarea id="en-text">' + esc(n.text) + '</textarea></div>';
+  html += '<div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancel</button><button class="btn-save" onclick="submitEditNote(' + mealId + ',' + noteId + ')">Save</button></div>';
   openModal(html);
 }
 
-function submitEditNote(mealId, entryId) {
-  var date = document.getElementById('ed-date').value;
-  var ingr = document.getElementById('ed-ingr').value.trim();
+function submitEditNote(mealId, noteId) {
+  var date = document.getElementById('en-date').value;
+  var text = document.getElementById('en-text').value.trim();
   if (!date) { alert('Please enter a date.'); return; }
-  if (!ingr) { alert('Please enter ingredients.'); return; }
+  if (!text) { alert('Please enter a note.'); return; }
   var m = data.meals.find(function(x) { return x.id === mealId; });
-  var e = m.entries.find(function(x) { return x.id === entryId; });
-  e.date = date; e.ingredients = ingr;
+  var n = m.notes.find(function(x) { return x.id === noteId; });
+  n.date = date; n.text = text;
   save(); closeModal(); render();
 }
 
-function deleteNote(mealId, entryId) {
+function deleteNote(mealId, noteId) {
   if (!confirm('Delete this note?')) return;
   var m = data.meals.find(function(x) { return x.id === mealId; });
-  m.entries = m.entries.filter(function(x) { return x.id !== entryId; });
+  m.notes = m.notes.filter(function(x) { return x.id !== noteId; });
   save(); render();
 }
 
@@ -499,7 +666,9 @@ function pullFromGoogle() {
       data.meals.forEach(function(m) {
         if (!m.instructions) m.instructions = "";
         if (m.hasRecipe === undefined) m.hasRecipe = !!m.instructions;
-        if (!m.entries) m.entries = [];
+        if (!m.ingredients) m.ingredients = [];
+        if (!m.notes) m.notes = [];
+        if (!m.cronDate) m.cronDate = '';
         m.photo = existingPhotos[m.id] || "";
       });
       data.meals.forEach(function(m) {
